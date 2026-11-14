@@ -89,9 +89,13 @@ npm run accuracy  # fails if precision or recall drop below test/fixtures/accura
 
 ## Documentation
 
+Browse locally as a site with `npm run docs:dev`, or read the Markdown here:
+
+- [Quickstart: running and verifying in 15 minutes](docs/quickstart.md)
+- [Self-hosting guide](docs/self-hosting.md) and [configuration reference](docs/configuration.md)
 - [API reference](docs/api.md)
 - [Signal catalog](docs/signals.md), with false-positive notes for each signal
-- [Integrating: fail open vs fail closed](docs/integration.md)
+- [SDKs, React, webhooks, fail open vs fail closed](docs/integration.md)
 - [Accuracy harness](docs/accuracy.md)
 - [Privacy guide for operators](docs/privacy.md)
 - [Security policy](SECURITY.md) and [contributing](CONTRIBUTING.md)

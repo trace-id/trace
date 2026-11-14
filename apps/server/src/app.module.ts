@@ -16,6 +16,7 @@ import { RateLimitService } from './infra/rate-limit.service.js';
 import { RedisService } from './infra/redis.service.js';
 import { IP_INTEL, type IpIntelProvider } from './intel/ip-intel.js';
 import { KeyService } from './keys/key.service.js';
+import { SdkController } from './sdk/sdk.controller.js';
 import { ManageController } from './manage/manage.controller.js';
 import { ProjectDataController } from './manage/project-data.controller.js';
 import { ProjectKeysController } from './manage/project-keys.controller.js';
@@ -47,6 +48,7 @@ export class AppModule {
         ProjectKeysController,
         ProjectDataController,
         HealthController,
+        SdkController,
       ],
       providers: [
         { provide: ENV, useValue: deps.env },

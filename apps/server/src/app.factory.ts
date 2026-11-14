@@ -27,7 +27,10 @@ function configureFastify(instance: FastifyInstance): void {
   );
 
   instance.addHook('onSend', (req, reply, payload, done) => {
-    for (const [name, value] of Object.entries(SECURITY_HEADERS)) void reply.header(name, value);
+    // Defaults only: a route that sets its own value (e.g. a cacheable SDK file) keeps it.
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      if (!reply.hasHeader(name)) void reply.header(name, value);
+    }
     if (req.url.startsWith('/v1/identify')) void reply.header('Vary', 'Origin');
     if (req.corsOrigin) void reply.header('Access-Control-Allow-Origin', req.corsOrigin);
     done(null, payload);

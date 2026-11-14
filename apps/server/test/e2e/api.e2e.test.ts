@@ -220,6 +220,18 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     expect((await identify(legacy)).statusCode).toBe(200);
   });
 
+  it('serves the browser SDK bundle as cacheable public code, from an allow-list only', async () => {
+    const res = await http.inject({ method: 'GET', url: '/sdk/sdk.esm.js' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('javascript');
+    expect(res.headers['cache-control']).toBe('public, max-age=3600');
+    expect(res.headers['access-control-allow-origin']).toBe('*');
+    expect(res.body).toContain('createClient');
+    for (const url of ['/sdk/package.json', '/sdk/..%2Fpackage.json', '/sdk/client.js']) {
+      expect((await http.inject({ method: 'GET', url })).statusCode).toBe(404);
+    }
+  });
+
   it('serves health without auth and 404s unknown routes in the standard shape', async () => {
     expect((await http.inject({ method: 'GET', url: '/health' })).json()).toEqual({ status: 'ok' });
     const missing = await http.inject({ method: 'GET', url: '/v1/nope' });

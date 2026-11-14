@@ -12,3 +12,5 @@ coverage/
 PLAN-*.md
 .next/
 next-env.d.ts
+docs/.vitepress/dist/
+docs/.vitepress/cache/

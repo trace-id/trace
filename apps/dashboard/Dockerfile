@@ -5,10 +5,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/signals/package.json packages/signals/
 COPY packages/sdk-js/package.json packages/sdk-js/
+COPY packages/sdk-react/package.json packages/sdk-react/
 COPY packages/sdk-node/package.json packages/sdk-node/
 COPY apps/server/package.json apps/server/
 COPY apps/server/prisma apps/server/prisma
 COPY apps/dashboard/package.json apps/dashboard/
+COPY docs/package.json docs/
 RUN npm ci --no-audit --no-fund --ignore-scripts
 COPY packages/signals packages/signals
 COPY apps/dashboard apps/dashboard
