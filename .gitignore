@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+
+# Private planning notes (not for the public repo)
+PLAN-*.md

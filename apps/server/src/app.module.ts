@@ -1,0 +1,48 @@
+import { type DynamicModule, Module } from '@nestjs/common';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { type ScoringConfig } from '@tbdname/signals/config';
+import { AuthGuard } from './common/auth.js';
+import { ErrorFilter } from './common/error.filter.js';
+import { ENV, type Env } from './config/env.js';
+import { SCORING } from './config/scoring.js';
+import { EventsController } from './events/events.controller.js';
+import { HealthController } from './health/health.controller.js';
+import { IdentifyController } from './identify/identify.controller.js';
+import { IdentifyService } from './identify/identify.service.js';
+import { PartitionService } from './infra/partition.service.js';
+import { PrismaService } from './infra/prisma.service.js';
+import { RateLimitService } from './infra/rate-limit.service.js';
+import { RedisService } from './infra/redis.service.js';
+import { IP_INTEL, type IpIntelProvider } from './intel/ip-intel.js';
+import { KeyService } from './keys/key.service.js';
+import { VelocityService } from './velocity/velocity.service.js';
+
+export interface AppDependencies {
+  env: Env;
+  scoring: ScoringConfig;
+  ipIntel: IpIntelProvider;
+}
+
+@Module({})
+export class AppModule {
+  static forRoot(deps: AppDependencies): DynamicModule {
+    return {
+      module: AppModule,
+      controllers: [IdentifyController, EventsController, HealthController],
+      providers: [
+        { provide: ENV, useValue: deps.env },
+        { provide: SCORING, useValue: deps.scoring },
+        { provide: IP_INTEL, useValue: deps.ipIntel },
+        { provide: APP_GUARD, useClass: AuthGuard },
+        { provide: APP_FILTER, useClass: ErrorFilter },
+        PrismaService,
+        RedisService,
+        RateLimitService,
+        KeyService,
+        VelocityService,
+        IdentifyService,
+        PartitionService,
+      ],
+    };
+  }
+}

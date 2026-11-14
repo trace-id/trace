@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "identification": {
+    "matchThreshold": 0.9,
+    "tokenAgreementThreshold": 0.6,
+    "minSharedWeightRatio": 0.5,
+    "ambiguityMargin": 0.1,
+    "maxCandidates": 50,
+    "componentWeights": {
+      "canvas": 3,
+      "webgl": 3,
+      "webglParams": 2,
+      "audio": 2,
+      "fonts": 3,
+      "screen": 1.5,
+      "hardware": 1.5,
+      "timezone": 1,
+      "languages": 1,
+      "platform": 1,
+      "math": 1,
+      "css": 0.5,
+      "media": 0.5,
+      "userAgentFamily": 2
+    },
+    "buckets": [
+      ["canvas", "webgl", "audio"],
+      ["screen", "hardware", "timezone", "platform"],
+      ["fonts", "webglParams", "languages"]
+    ]
+  },
+  "suspect": {
+    "weights": {
+      "bot": 60,
+      "tampering": 25,
+      "tor": 30,
+      "datacenterIp": 15,
+      "ipBlocklist": 40,
+      "velocity": 20,
+      "incognito": 5
+    }
+  },
+  "velocity": {
+    "eventsPerVisitor1h": 60,
+    "visitorsPerIp1h": 20,
+    "ipsPerVisitor24h": 10,
+    "visitorsPerLinkedId24h": 5
+  }
+}

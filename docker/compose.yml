@@ -1,0 +1,59 @@
+name: tbdname
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tbdname}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in docker/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-tbdname}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Counters and rate limits only: no persistence needed.
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "volatile-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build:
+      context: ..
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tbdname}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tbdname}
+      REDIS_URL: redis://redis:6379
+      TOKEN_SECRET: ${TOKEN_SECRET:?set TOKEN_SECRET in docker/.env}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      IP_STORAGE: ${IP_STORAGE:-truncated}
+      EVENT_VERIFY_WINDOW_MINUTES: ${EVENT_VERIFY_WINDOW_MINUTES:-60}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # dashboard: added in Phase 2 (Next.js, talks only to the server API).
+
+volumes:
+  pgdata:

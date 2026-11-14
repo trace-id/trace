@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Device ID demo</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+      button { font: inherit; padding: 0.5rem 1rem; margin-right: 0.5rem; cursor: pointer; }
+      pre { background: color-mix(in srgb, currentColor 8%, transparent); padding: 1rem; overflow-x: auto; border-radius: 6px; }
+      .muted { opacity: 0.7; }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "@tbdname/signals/hash": "/signals/hash.js",
+          "@tbdname/signals/types": "/signals/types.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Device ID demo</h1>
+    <p class="muted">
+      Step 1 runs the browser SDK and shows the small response a page gets. Step 2 sends only the
+      <code>eventId</code> to this demo's backend, which fetches the full verdict with the secret key.
+      Try it again in a private window: the <code>visitorId</code> should stay the same.
+    </p>
+    <button id="identify">1. Identify</button>
+    <button id="verify" disabled>2. Verify on server</button>
+    <h2>Browser response</h2>
+    <pre id="browser">-</pre>
+    <h2>Server-verified event</h2>
+    <pre id="server">-</pre>
+    <script type="module">
+      import { createClient } from '/sdk/client.js';
+
+      const config = __DEMO_CONFIG__;
+      const client = createClient({ ...config, timeoutMs: 8000 });
+      const $ = (id) => document.getElementById(id);
+      let eventId = null;
+
+      $('identify').addEventListener('click', async () => {
+        $('browser').textContent = 'collecting...';
+        try {
+          const result = await client.get({ tags: { page: 'demo' } });
+          eventId = result.eventId;
+          $('browser').textContent = JSON.stringify(result, null, 2);
+          $('verify').disabled = false;
+        } catch (err) {
+          $('browser').textContent = `${err.code ?? 'error'}: ${err.message}`;
+        }
+      });
+
+      $('verify').addEventListener('click', async () => {
+        $('server').textContent = 'verifying...';
+        const res = await fetch('/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId }),
+        });
+        $('server').textContent = JSON.stringify(await res.json(), null, 2);
+      });
+    </script>
+  </body>
+</html>
