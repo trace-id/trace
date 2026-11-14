@@ -9,6 +9,47 @@
 
 Never trust a `visitorId` or score that the browser sends you directly.
 
+## Loading the browser SDK
+
+From npm with a bundler:
+
+```ts
+import { createClient } from '@tbdname/sdk-js';
+const client = createClient({ apiKey: 'pk_...', endpoint: 'https://id.example.com' });
+```
+
+Without a bundler, serve the single-file build from your own domain (`packages/sdk-js/dist/browser/`, about 7.5 KB gzipped):
+
+```html
+<script type="module">
+  import { createClient } from '/assets/sdk.esm.js';
+  const client = createClient({ apiKey: 'pk_...', endpoint: 'https://id.example.com' });
+</script>
+<!-- or, classic script: window.Tbdname.createClient(...) -->
+<script src="/assets/sdk.global.js"></script>
+```
+
+## React
+
+```tsx
+import { IdentifyProvider, useVisitorData } from '@tbdname/sdk-react';
+
+<IdentifyProvider apiKey="pk_..." endpoint="https://id.example.com">
+  <SignupForm />
+</IdentifyProvider>;
+
+function SignupForm() {
+  const { getData } = useVisitorData({ immediate: false });
+  async function onSubmit(form: FormData) {
+    const result = await getData({ linkedId: form.get('email') as string });
+    await fetch('/api/signup', { method: 'POST', body: JSON.stringify({ ...Object.fromEntries(form), eventId: result?.eventId }) });
+  }
+  // ...
+}
+```
+
+`useVisitorData()` returns `{ data, error, isLoading, getData }`; with `immediate` (the default) it identifies on mount. Errors are typed `IdentifyError`s with a `code`, never thrown from the hook. `useIdentifyClient()` gives the client for consent toggles. Nothing runs during server rendering.
+
 ## Fail open or fail closed
 
 This service must never be the reason your users cannot sign in. Both SDKs use short timeouts and throw typed errors (`IdentifyError`, `VerifyError`) with a `code`. Choose per action:

@@ -37,8 +37,9 @@ Precision and recall are pairwise: of the session pairs we put on the same visit
 | Path | What | License |
 | --- | --- | --- |
 | [`packages/signals`](packages/signals) | Shared payload types, signal definitions, scoring helpers | MIT |
-| [`packages/sdk-js`](packages/sdk-js) | Browser SDK | MIT |
-| [`packages/sdk-node`](packages/sdk-node) | Server helper: `verifyEvent` | MIT |
+| [`packages/sdk-js`](packages/sdk-js) | Browser SDK (npm, or a single 7.5 KB gzip file) | MIT |
+| [`packages/sdk-react`](packages/sdk-react) | React bindings: `<IdentifyProvider>`, `useVisitorData()` | MIT |
+| [`packages/sdk-node`](packages/sdk-node) | Server helpers: `verifyEvent`, `verifyWebhook` | MIT |
 | [`apps/server`](apps/server) | NestJS 11 + Fastify 5 API, Prisma/Postgres, Redis | AGPL-3.0 |
 | [`apps/dashboard`](apps/dashboard) | Next.js admin dashboard (talks only to the API) | AGPL-3.0 |
 | [`docker/`](docker) | Self-host Compose stack | AGPL-3.0 |

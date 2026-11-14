@@ -21,7 +21,6 @@ const { verifyEvent } = await import(new URL('../../packages/sdk-node/dist/verif
 
 const STATIC = {
   '/sdk/': join(root, 'packages/sdk-js/dist'),
-  '/signals/': join(root, 'packages/signals/dist'),
 };
 const TYPES = { '.js': 'text/javascript', '.map': 'application/json', '.html': 'text/html; charset=utf-8' };
 

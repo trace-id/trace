@@ -11,14 +11,6 @@
       pre { background: color-mix(in srgb, currentColor 8%, transparent); padding: 1rem; overflow-x: auto; border-radius: 6px; }
       .muted { opacity: 0.7; }
     </style>
-    <script type="importmap">
-      {
-        "imports": {
-          "@tbdname/signals/hash": "/signals/hash.js",
-          "@tbdname/signals/types": "/signals/types.js"
-        }
-      }
-    </script>
   </head>
   <body>
     <h1>Device ID demo</h1>
@@ -34,7 +26,7 @@
     <h2>Server-verified event</h2>
     <pre id="server">-</pre>
     <script type="module">
-      import { createClient } from '/sdk/client.js';
+      import { createClient } from '/sdk/browser/sdk.esm.js';
 
       const config = __DEMO_CONFIG__;
       const client = createClient({ ...config, timeoutMs: 8000 });
