@@ -4,7 +4,7 @@
 
 Open-source, self-hostable device identification and fraud signals. A page embeds the browser SDK, which collects device signals and sends them to your server. The server returns a stable `visitorId`, a suspect score, and the reasons behind that score. Your backend then verifies the event server-side before trusting it.
 
-**Status: Phase 1 (spike).** Identification, verification, a first signal set and an accuracy harness work end to end. Webhooks, the dashboard, the React SDK, retention jobs and the full signal catalog come in Phase 2. Do not use this in production yet.
+**Status: Phase 2 in progress.** Identification, verification, webhooks, retention and deletion, the management API and the dashboard work end to end. Remaining for Phase 2: the rest of the signal catalog, the React SDK, a bundled browser build and the docs site. Do not use this in production yet.
 
 ## How it works
 
@@ -40,6 +40,7 @@ Precision and recall are pairwise: of the session pairs we put on the same visit
 | [`packages/sdk-js`](packages/sdk-js) | Browser SDK | MIT |
 | [`packages/sdk-node`](packages/sdk-node) | Server helper: `verifyEvent` | MIT |
 | [`apps/server`](apps/server) | NestJS 11 + Fastify 5 API, Prisma/Postgres, Redis | AGPL-3.0 |
+| [`apps/dashboard`](apps/dashboard) | Next.js admin dashboard (talks only to the API) | AGPL-3.0 |
 | [`docker/`](docker) | Self-host Compose stack | AGPL-3.0 |
 | [`docs/`](docs) | Documentation | CC BY 4.0 |
 | [`examples/demo`](examples/demo) | Demo page and fake customer backend | MIT |
@@ -59,6 +60,9 @@ npx prisma migrate deploy
 npm run keys:create -- --project demo --origins http://localhost:5173
 npm run dev                                     # http://localhost:8080
 cd ../..
+
+# Dashboard (another terminal): first account you create becomes the admin
+API_URL=http://localhost:8080 npm run dev -w tbdname-dashboard   # http://localhost:3000
 
 # Demo page (another terminal)
 PUBLIC_KEY=pk_... SECRET_KEY=sk_... npm run demo  # http://localhost:5173

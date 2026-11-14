@@ -7,6 +7,7 @@ COPY packages/signals/package.json packages/signals/
 COPY packages/sdk-js/package.json packages/sdk-js/
 COPY packages/sdk-node/package.json packages/sdk-node/
 COPY apps/server/package.json apps/server/
+COPY apps/dashboard/package.json apps/dashboard/
 COPY apps/server/prisma apps/server/prisma
 RUN npm ci --no-audit --no-fund
 COPY packages/signals packages/signals

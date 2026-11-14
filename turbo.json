@@ -2,16 +2,32 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**"
+      ],
+      "env": [
+        "NEXT_TELEMETRY_DISABLED"
+      ]
     },
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "lint": {},
     "test": {
-      "dependsOn": ["^build"],
-      "env": ["DATABASE_URL_TEST", "REDIS_URL_TEST"]
+      "dependsOn": [
+        "^build"
+      ],
+      "env": [
+        "DATABASE_URL_TEST",
+        "REDIS_URL_TEST"
+      ]
     }
   }
 }

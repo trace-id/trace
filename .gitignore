@@ -10,3 +10,5 @@ coverage/
 
 # Private planning notes (not for the public repo)
 PLAN-*.md
+.next/
+next-env.d.ts
