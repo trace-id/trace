@@ -15,6 +15,7 @@ model Project {
   createdAt     DateTime  @default(now()) @db.Timestamptz(3)
   keys          ApiKey[]
   visitors      Visitor[]
+  webhooks      WebhookEndpoint[]
 
   @@map("projects")
 }
@@ -52,6 +53,7 @@ model Visitor {
   project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   buckets       VisitorBucket[]
   events        Event[]
+  deliveries    WebhookDelivery[]
 
   @@index([projectId, lastSeenAt])
   @@map("visitors")
@@ -101,4 +103,45 @@ model Event {
   @@index([visitorId, createdAt])
   @@index([projectId, linkedId, createdAt])
   @@map("events")
+}
+
+model WebhookEndpoint {
+  id            String            @id @default(uuid()) @db.Uuid
+  projectId     String            @db.Uuid
+  url           String            @db.VarChar(2048)
+  /// AES-256-GCM encrypted with a key derived from TOKEN_SECRET; needed in clear to sign.
+  secretEnc     String            @db.VarChar(256)
+  events        String[]
+  flagThreshold Int               @default(70)
+  enabled       Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(3)
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deliveries    WebhookDelivery[]
+
+  @@index([projectId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id            String          @id @db.Uuid
+  endpointId    String          @db.Uuid
+  visitorId     String          @db.VarChar(32)
+  eventId       String          @db.Uuid
+  type          String          @db.VarChar(32)
+  payload       Json
+  status        String          @default("pending") @db.VarChar(16)
+  attempts      Int             @default(0)
+  nextAttemptAt DateTime        @db.Timestamptz(3)
+  lockedUntil   DateTime?       @db.Timestamptz(3)
+  lastStatus    Int?
+  lastError     String?         @db.VarChar(200)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  deliveredAt   DateTime?       @db.Timestamptz(3)
+  endpoint      WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  visitor       Visitor         @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([endpointId, createdAt])
+  @@index([visitorId])
+  @@map("webhook_deliveries")
 }

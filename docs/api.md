@@ -107,6 +107,26 @@ Header: `Authorization: Bearer sk_...`. Permanently deletes the visitor, its mat
 
 Events older than the project's `retentionDays` (default 30, capped by `RETENTION_MAX_DAYS`, default 90) are deleted, and so are visitors not seen within that window. Whole monthly partitions older than `RETENTION_MAX_DAYS` are dropped. The job runs at startup and every `MAINTENANCE_INTERVAL_MINUTES` (default 360); a lease row keeps it to one instance at a time.
 
+## Webhooks
+
+Manage endpoints with the secret key. At most 10 per project.
+
+`POST /v1/webhooks` with `{ "url": "https://hooks.example.com/x", "events": ["event.created", "visitor.flagged"], "flagThreshold": 70 }` returns `201` with the endpoint and its signing `secret` (`whsec_...`). **The secret is shown only once.** `visitor.flagged` fires when an event's `suspectScore` is at or above `flagThreshold` (default 70).
+
+`GET /v1/webhooks` lists endpoints (no secrets). `DELETE /v1/webhooks/:id` removes one (`204` or `404`).
+
+Each delivery is a `POST` with a JSON body:
+
+```json
+{ "id": "<delivery id>", "type": "event.created", "createdAt": "...", "data": { "...": "same shape as GET /v1/events/:eventId" } }
+```
+
+Headers: `X-Webhook-Id` (same as `id`, stable across retries), `X-Webhook-Timestamp`, and `X-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`. Verify with `verifyWebhook` from `@tbdname/sdk-node/webhooks` (see [integration.md](integration.md#receiving-webhooks)).
+
+Delivery: at-least-once. Any 2xx within 5 s counts as delivered. Otherwise retried after 10 s, 1 min, 5 min, 30 min, 2 h, 6 h, 12 h and 24 h, then marked dead. Redirects are not followed. Finished deliveries are purged after 7 days; deleting a visitor deletes its deliveries.
+
+**Attack surface:** SSRF (https only; credentials, fragments and private, loopback, link-local, metadata, CGNAT, NAT64 and 6to4 targets refused at registration and re-checked against every resolved address at connect time, which defeats DNS rebinding; no redirects; 64 KB response cap; 5 s timeout), IDOR (scoped by project), abuse (10 endpoints per project, per-key rate limit), secret exposure (encrypted at rest with AES-256-GCM, shown once). `WEBHOOK_ALLOW_INSECURE=true` disables the http and private-network checks for local development only.
+
 ## Coming later in Phase 2
 
-Signed webhooks, management API for the dashboard (keys, origins, retention, usage, event search).
+Management API for the dashboard (keys, origins, retention, usage, event search).

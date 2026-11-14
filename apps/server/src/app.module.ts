@@ -17,6 +17,9 @@ import { IP_INTEL, type IpIntelProvider } from './intel/ip-intel.js';
 import { KeyService } from './keys/key.service.js';
 import { VelocityService } from './velocity/velocity.service.js';
 import { VisitorsController } from './visitors/visitors.controller.js';
+import { WebhookWorkerService } from './webhooks/webhook-worker.service.js';
+import { WebhookService } from './webhooks/webhook.service.js';
+import { WebhooksController } from './webhooks/webhooks.controller.js';
 
 export interface AppDependencies {
   env: Env;
@@ -29,7 +32,7 @@ export class AppModule {
   static forRoot(deps: AppDependencies): DynamicModule {
     return {
       module: AppModule,
-      controllers: [IdentifyController, EventsController, VisitorsController, HealthController],
+      controllers: [IdentifyController, EventsController, VisitorsController, WebhooksController, HealthController],
       providers: [
         { provide: ENV, useValue: deps.env },
         { provide: SCORING, useValue: deps.scoring },
@@ -43,6 +46,8 @@ export class AppModule {
         VelocityService,
         IdentifyService,
         MaintenanceService,
+        WebhookService,
+        WebhookWorkerService,
       ],
     };
   }

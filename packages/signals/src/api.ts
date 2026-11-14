@@ -67,6 +67,31 @@ export interface VisitorHistoryResponse {
   nextCursor: string | null;
 }
 
+export const WEBHOOK_TYPES = ['event.created', 'visitor.flagged'] as const;
+export type WebhookType = (typeof WEBHOOK_TYPES)[number];
+
+/**
+ * Body of every webhook POST. `id` is stable across retries of one delivery; dedupe on it
+ * (or on `data.eventId` + `type`), since deliveries are at-least-once.
+ */
+export interface WebhookPayload {
+  id: string;
+  type: WebhookType;
+  createdAt: string;
+  data: EventResponse;
+}
+
+export interface WebhookEndpointResponse {
+  id: string;
+  url: string;
+  events: WebhookType[];
+  flagThreshold: number;
+  enabled: boolean;
+  createdAt: string;
+  /** Returned only when the endpoint is created. */
+  secret?: string;
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string };
 }

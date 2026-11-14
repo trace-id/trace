@@ -44,6 +44,28 @@ onConsent(() => client.enable());
 onWithdraw(() => client.disable(true)); // also deletes the persisted visitor token
 ```
 
+## Receiving webhooks
+
+Verify against the **raw** body (before JSON parsing), reject failures, and dedupe on `payload.id`:
+
+```ts
+import { verifyWebhook, WebhookVerificationError } from '@tbdname/sdk-node/webhooks';
+
+app.post('/hooks/device', express.raw({ type: 'application/json' }), async (req, res) => {
+  let payload;
+  try {
+    payload = verifyWebhook({ body: req.body, signature: req.header('X-Signature'), secret: process.env.WEBHOOK_SECRET });
+  } catch (err) {
+    return res.status(400).send((err as WebhookVerificationError).code);
+  }
+  if (await alreadyProcessed(payload.id)) return res.sendStatus(200);
+  await handle(payload); // payload.type: 'event.created' | 'visitor.flagged'
+  res.sendStatus(200);
+});
+```
+
+Respond quickly (within 5 s) and do slow work asynchronously; a slow response counts as a failure and is retried. Signatures older than 5 minutes are rejected by default (`toleranceSec`).
+
 ## Verification window
 
 Events can be verified for `EVENT_VERIFY_WINDOW_MINUTES` (default 60) after creation, then return `410 event_expired`. Verify promptly; do not store `eventId`s to verify later.

@@ -8,7 +8,7 @@ import { type RequestHeaders } from '@tbdname/signals/types';
 import { newVisitorId, uuidv7 } from '../common/ids.js';
 import { ENV, type Env } from '../config/env.js';
 import { SCORING } from '../config/scoring.js';
-import { type StoredSignals } from '../events/event-mapper.js';
+import { type StoredSignals, toEventResponse } from '../events/event-mapper.js';
 import { bucketHashes, matchVisitor } from '../identification/engine.js';
 import { PrismaCandidateSource } from '../identification/prisma-candidate-source.js';
 import { issueToken, verifyToken } from '../identification/token.js';
@@ -18,6 +18,7 @@ import { IP_INTEL, type IpIntelProvider } from '../intel/ip-intel.js';
 import { ipKey, storableIp } from '../intel/ip-storage.js';
 import { type ResolvedKey } from '../keys/key.service.js';
 import { VelocityService } from '../velocity/velocity.service.js';
+import { WebhookService } from '../webhooks/webhook.service.js';
 import { type ParsedIdentifyRequest } from './identify.schema.js';
 
 const MINUTE_MS = 60_000;
@@ -43,6 +44,7 @@ export class IdentifyService {
     private readonly prisma: PrismaService,
     private readonly rateLimit: RateLimitService,
     private readonly velocity: VelocityService,
+    private readonly webhooks: WebhookService,
   ) {}
 
   async identify(req: ParsedIdentifyRequest, ctx: IdentifyContext): Promise<IdentifyResponse> {
@@ -103,6 +105,27 @@ export class IdentifyService {
     };
     const summary = components as Prisma.InputJsonObject;
     const confidence = round2(decision.confidence);
+    const eventRow = {
+      id: eventId,
+      createdAt: now,
+      projectId,
+      visitorId,
+      matchKind: decision.kind,
+      confidence,
+      suspectScore: score.score,
+      reasons: score.reasons as unknown as Prisma.InputJsonArray,
+      signals: stored as unknown as Prisma.InputJsonObject,
+      ip: storableIp(ctx.ip, this.env.IP_STORAGE, this.env.TOKEN_SECRET),
+      asn: ip.asn,
+      country: ip.country,
+      tags: req.tags ?? null,
+      linkedId: req.linkedId ?? null,
+    };
+    const deliveries = await this.webhooks.deliveriesFor(
+      projectId,
+      toEventResponse(eventRow, this.env.EVENT_VERIFY_WINDOW_MINUTES),
+      now,
+    );
 
     await this.prisma.$transaction([
       this.prisma.visitor.upsert({
@@ -118,24 +141,8 @@ export class IdentifyService {
         })),
         skipDuplicates: true,
       }),
-      this.prisma.event.create({
-        data: {
-          id: eventId,
-          createdAt: now,
-          projectId,
-          visitorId,
-          matchKind: decision.kind,
-          confidence,
-          suspectScore: score.score,
-          reasons: score.reasons as unknown as Prisma.InputJsonArray,
-          signals: stored as unknown as Prisma.InputJsonObject,
-          ip: storableIp(ctx.ip, this.env.IP_STORAGE, this.env.TOKEN_SECRET),
-          asn: ip.asn,
-          country: ip.country,
-          tags: req.tags ?? undefined,
-          linkedId: req.linkedId ?? null,
-        },
-      }),
+      this.prisma.event.create({ data: { ...eventRow, tags: req.tags ?? undefined } }),
+      this.prisma.webhookDelivery.createMany({ data: deliveries }),
     ]);
 
     this.logger.log(

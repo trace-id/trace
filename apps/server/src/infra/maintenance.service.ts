@@ -7,9 +7,12 @@ const MONTHS_AHEAD = 2;
 const DELETE_BATCH = 5000;
 const LEASE_NAME = 'maintenance';
 const DAY_MS = 24 * 60 * 60_000;
+/** Finished webhook deliveries hold a copy of the event; keep them only for debugging. */
+const DELIVERY_RETENTION_DAYS = 7;
 
 export interface RetentionResult {
   eventsDeleted: number;
+  deliveriesDeleted: number;
   visitorsDeleted: number;
   partitionsDropped: number;
 }
@@ -48,7 +51,7 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       await this.ensurePartitions();
       const r = await this.applyRetention();
       this.logger.log(
-        `retention: events=${r.eventsDeleted} visitors=${r.visitorsDeleted} partitions=${r.partitionsDropped}`,
+        `retention: events=${r.eventsDeleted} deliveries=${r.deliveriesDeleted} visitors=${r.visitorsDeleted} partitions=${r.partitionsDropped}`,
       );
     } catch (err) {
       this.logger.error(`maintenance failed: ${err instanceof Error ? err.message : 'unknown'}`);
@@ -105,8 +108,13 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       }
     }
 
+    const deliveryCutoff = new Date(now.getTime() - DELIVERY_RETENTION_DAYS * DAY_MS);
+    const { count: deliveriesDeleted } = await this.prisma.webhookDelivery.deleteMany({
+      where: { createdAt: { lt: deliveryCutoff }, status: { not: 'pending' } },
+    });
+
     const dropped = await this.prisma.$queryRaw<{ n: number }[]>`
       SELECT drop_old_event_partitions(${maxDays}::integer) AS n`;
-    return { eventsDeleted, visitorsDeleted, partitionsDropped: Number(dropped[0]?.n ?? 0) };
+    return { eventsDeleted, deliveriesDeleted, visitorsDeleted, partitionsDropped: Number(dropped[0]?.n ?? 0) };
   }
 }

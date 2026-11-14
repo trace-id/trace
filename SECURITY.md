@@ -26,6 +26,7 @@ Especially interesting:
 - Revoked keys keep working for up to 30 seconds per server instance because of the key cache.
 - Client-side signals can be spoofed by a determined attacker. They raise the cost of abuse; they are not proof.
 - Without Redis, rate limits and velocity signals are off (the server fails open and logs a warning).
+- `WEBHOOK_ALLOW_INSECURE=true` turns off webhook SSRF protection. It exists for local development and logs a warning at startup; never set it in production.
 
 ## Supported versions
 
