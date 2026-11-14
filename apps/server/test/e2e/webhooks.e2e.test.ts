@@ -61,6 +61,7 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
       NODE_ENV: 'test',
       DATABASE_URL,
       TOKEN_SECRET: 'e2e-secret-e2e-secret-e2e-secret-e2e',
+      AUTH_SECRET: 'e2e-auth-secret-e2e-auth-secret-e2e',
       WEBHOOK_ALLOW_INSECURE: 'true',
     });
     const none = CidrSet.from([]);

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
+import { type Prisma } from '@prisma/client';
 import { ENV, type Env } from '../config/env.js';
 import { PrismaService } from './prisma.service.js';
 
@@ -58,9 +59,22 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
     }
   }
 
+  /**
+   * Partition DDL locks events and, through the foreign key, visitors: the reverse of the
+   * order ingest uses. lock_timeout below Postgres's 1 s deadlock check makes the DDL give
+   * up first, so ingest never becomes the deadlock victim; the DDL retries on the next run.
+   */
+  private async ddl<T>(run: () => Prisma.PrismaPromise<T>): Promise<T> {
+    const [, result] = await this.prisma.$transaction([
+      this.prisma.$executeRaw`SET LOCAL lock_timeout = '500ms'`,
+      run(),
+    ]);
+    return result;
+  }
+
   async ensurePartitions(): Promise<void> {
     try {
-      await this.prisma.$executeRaw`SELECT ensure_event_partitions(${MONTHS_AHEAD}::integer)`;
+      await this.ddl(() => this.prisma.$executeRaw`SELECT ensure_event_partitions(${MONTHS_AHEAD}::integer)`);
     } catch (err) {
       this.logger.error(`ensure_event_partitions failed: ${err instanceof Error ? err.message : 'unknown'}`);
     }
@@ -113,8 +127,15 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       where: { createdAt: { lt: deliveryCutoff }, status: { not: 'pending' } },
     });
 
-    const dropped = await this.prisma.$queryRaw<{ n: number }[]>`
-      SELECT drop_old_event_partitions(${maxDays}::integer) AS n`;
-    return { eventsDeleted, deliveriesDeleted, visitorsDeleted, partitionsDropped: Number(dropped[0]?.n ?? 0) };
+    let partitionsDropped = 0;
+    try {
+      const dropped = await this.ddl(
+        () => this.prisma.$queryRaw<{ n: number }[]>`SELECT drop_old_event_partitions(${maxDays}::integer) AS n`,
+      );
+      partitionsDropped = Number(dropped[0]?.n ?? 0);
+    } catch (err) {
+      this.logger.warn(`partition drop deferred: ${err instanceof Error ? err.message.slice(0, 120) : 'unknown'}`);
+    }
+    return { eventsDeleted, deliveriesDeleted, visitorsDeleted, partitionsDropped };
   }
 }

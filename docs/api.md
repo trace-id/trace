@@ -127,6 +127,30 @@ Delivery: at-least-once. Any 2xx within 5 s counts as delivered. Otherwise retri
 
 **Attack surface:** SSRF (https only; credentials, fragments and private, loopback, link-local, metadata, CGNAT, NAT64 and 6to4 targets refused at registration and re-checked against every resolved address at connect time, which defeats DNS rebinding; no redirects; 64 KB response cap; 5 s timeout), IDOR (scoped by project), abuse (10 endpoints per project, per-key rate limit), secret exposure (encrypted at rest with AES-256-GCM, shown once). `WEBHOOK_ALLOW_INSECURE=true` disables the http and private-network checks for local development only.
 
-## Coming later in Phase 2
+## Management API (dashboard sessions)
 
-Management API for the dashboard (keys, origins, retention, usage, event search).
+Used by the dashboard. Authentication is a Better Auth session cookie, not an API key. The dashboard proxies `/api/auth/*` and `/v1/*` to the server so the cookie is first-party on the dashboard's origin (`DASHBOARD_URL`).
+
+Accounts: email and password (12 to 128 characters). The first account can always be created; after that `POST /api/auth/sign-up/email` returns `403` unless `DASHBOARD_ALLOW_SIGNUP=true`. Sign-in: `POST /api/auth/sign-in/email`. Sessions last 7 days.
+
+Roles per project: `owner` (creator), `admin`, `viewer`. Viewers can read; changes need `admin` or above. Users who are not members get `404` for every project route.
+
+| Route | Role | What |
+| --- | --- | --- |
+| `GET /v1/me` | signed in | User and their projects with roles |
+| `POST /v1/projects` `{ name }` | signed in | Create a project (you become owner; max 50) |
+| `GET /v1/projects/:projectId` | viewer | Project |
+| `PATCH /v1/projects/:projectId` `{ name?, retentionDays? }` | admin | Update; `retentionDays` capped by `RETENTION_MAX_DAYS` |
+| `GET /v1/projects/:projectId/keys` | viewer | Keys by prefix (never the full key) |
+| `POST /v1/projects/:projectId/keys` `{ type, name?, allowedOrigins? }` | admin | Create; full `key` returned once (max 20 active) |
+| `PATCH /v1/projects/:projectId/keys/:keyId` `{ name?, allowedOrigins? }` | admin | Rename, change origins (public keys) |
+| `POST /v1/projects/:projectId/keys/:keyId/revoke` | admin | Revoke; immediate on the instance that served the call, within 30 s elsewhere |
+| `GET /v1/projects/:projectId/usage?days=30` | viewer | Per-day events, new visitors, events with score >= 70 (UTC days, max 90) |
+| `GET /v1/projects/:projectId/events` | viewer | Search: `linkedId`, `visitorId`, `minScore`, `from`, `to` (ISO), `cursor`, `limit` (max 50) |
+| `GET /v1/projects/:projectId/events/:eventId` | viewer | Full event; no verification window |
+| `GET /v1/projects/:projectId/visitors/:visitorId` | viewer | Visitor history |
+| `DELETE /v1/projects/:projectId/visitors/:visitorId` | admin | Privacy deletion |
+| `GET`/`POST /v1/projects/:projectId/webhooks`, `DELETE .../webhooks/:id` | viewer / admin | Webhook endpoints |
+| `GET /v1/projects/:projectId/webhooks/:id/deliveries` | viewer | Last 50 delivery attempts |
+
+**Attack surface:** CSRF (writes require `Origin` equal to `DASHBOARD_URL`; cookies are `SameSite=Lax`, `Secure` when the dashboard is https), IDOR (membership checked before any handler runs; non-members get 404), privilege escalation (role ranks enforced per route; unknown body fields rejected so roles cannot be set through updates), account abuse (sign-up closed after the first account by default; Better Auth rate-limits auth routes), key disclosure (shown once, stored hashed).

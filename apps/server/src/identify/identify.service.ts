@@ -29,6 +29,14 @@ export interface IdentifyContext {
   headers: RequestHeaders;
 }
 
+/** Deadlock (40P01), serialization failure (40001), lock timeout (55P03), or Prisma's P2034. */
+export function isRetryableTxError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const e = err as { code?: unknown; message?: unknown };
+  if (e.code === 'P2034') return true;
+  return typeof e.message === 'string' && /\b(40P01|40001|55P03)\b|deadlock detected/.test(e.message);
+}
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -127,23 +135,31 @@ export class IdentifyService {
       now,
     );
 
-    await this.prisma.$transaction([
-      this.prisma.visitor.upsert({
-        where: { id: visitorId },
-        create: { id: visitorId, projectId, firstSeenAt: now, lastSeenAt: now, signalSummary: summary, eventCount: 1 },
-        update: { lastSeenAt: now, signalSummary: summary, eventCount: { increment: 1 } },
-      }),
-      this.prisma.visitorBucket.createMany({
-        data: bucketHashes(components, this.scoring.identification.buckets).map((bucketHash) => ({
-          projectId,
-          bucketHash,
-          visitorId,
-        })),
-        skipDuplicates: true,
-      }),
-      this.prisma.event.create({ data: { ...eventRow, tags: req.tags ?? undefined } }),
-      this.prisma.webhookDelivery.createMany({ data: deliveries }),
-    ]);
+    const persist = () =>
+      this.prisma.$transaction([
+        this.prisma.visitor.upsert({
+          where: { id: visitorId },
+          create: { id: visitorId, projectId, firstSeenAt: now, lastSeenAt: now, signalSummary: summary, eventCount: 1 },
+          update: { lastSeenAt: now, signalSummary: summary, eventCount: { increment: 1 } },
+        }),
+        this.prisma.visitorBucket.createMany({
+          data: bucketHashes(components, this.scoring.identification.buckets).map((bucketHash) => ({
+            projectId,
+            bucketHash,
+            visitorId,
+          })),
+          skipDuplicates: true,
+        }),
+        this.prisma.event.create({ data: { ...eventRow, tags: req.tags ?? undefined } }),
+        this.prisma.webhookDelivery.createMany({ data: deliveries }),
+      ]);
+    try {
+      await persist();
+    } catch (err) {
+      if (!isRetryableTxError(err)) throw err;
+      this.logger.warn(`event=${eventId} transaction conflict, retrying once`);
+      await persist();
+    }
 
     this.logger.log(
       `event=${eventId} visitor=${visitorId} match=${decision.kind} score=${score.score} ms=${Math.round(performance.now() - started)}`,

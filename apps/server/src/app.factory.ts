@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type FastifyInstance } from 'fastify';
 import { type AppDependencies, AppModule } from './app.module.js';
+import { AUTH, type Auth, toHeaders } from './auth/auth.js';
 import { parseTrustProxy } from './config/env.js';
 
 export const BODY_LIMIT_BYTES = 64 * 1024;
@@ -33,6 +34,32 @@ function configureFastify(instance: FastifyInstance): void {
   });
 }
 
+/**
+ * Better Auth speaks Fetch Request/Response; bridge it onto Fastify outside Nest's router.
+ * The dashboard proxies /api/auth/* here, so cookies are first-party on its origin.
+ */
+function mountAuth(instance: FastifyInstance, auth: Auth, baseUrl: string): void {
+  instance.route({
+    method: ['GET', 'POST'],
+    url: '/api/auth/*',
+    handler: async (req, reply) => {
+      const body = req.method === 'POST' && req.body !== undefined ? JSON.stringify(req.body) : undefined;
+      const headers = toHeaders(req.headers);
+      headers.delete('content-length');
+      const response = await auth.handler(
+        new Request(new URL(req.url, baseUrl), { method: req.method, headers, ...(body ? { body } : {}) }),
+      );
+      void reply.status(response.status);
+      response.headers.forEach((value, name) => {
+        if (name.toLowerCase() !== 'set-cookie') void reply.header(name, value);
+      });
+      const cookies = response.headers.getSetCookie();
+      if (cookies.length > 0) void reply.header('set-cookie', cookies);
+      return reply.send(response.body ? await response.text() : null);
+    },
+  });
+}
+
 export async function createApp(deps: AppDependencies): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({
     bodyLimit: BODY_LIMIT_BYTES,
@@ -48,6 +75,7 @@ export async function createApp(deps: AppDependencies): Promise<NestFastifyAppli
     bufferLogs: false,
   });
   app.enableShutdownHooks();
+  mountAuth(adapter.getInstance(), app.get<Auth>(AUTH), deps.env.DASHBOARD_URL);
   await app.init();
   new Logger('Bootstrap').log(`scoring v${deps.scoring.version}, ip storage ${deps.env.IP_STORAGE}`);
   return app;

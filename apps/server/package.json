@@ -22,6 +22,7 @@
     "@nestjs/platform-fastify": "11.2.8",
     "@prisma/client": "6.19.3",
     "@tbdname/signals": "0.1.0",
+    "better-auth": "1.7.14",
     "fastify": "5.12.7",
     "ioredis": "5.11.1",
     "prisma": "6.19.3",

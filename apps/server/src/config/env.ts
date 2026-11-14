@@ -27,6 +27,12 @@ export const envSchema = z.object({
   WEBHOOK_ALLOW_INSECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   WEBHOOK_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(5000),
   WEBHOOK_POLL_INTERVAL_MS: z.coerce.number().int().min(100).max(60_000).default(1000),
+  /** Signs dashboard sessions. At least 32 random characters, different from TOKEN_SECRET. */
+  AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
+  /** Public origin of the dashboard; it proxies /api/auth and /v1 to this server. */
+  DASHBOARD_URL: z.string().url().default('http://localhost:3000'),
+  /** After the first account exists, further sign-ups are refused unless this is true. */
+  DASHBOARD_ALLOW_SIGNUP: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(10_000),
 });
 

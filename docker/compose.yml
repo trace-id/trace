@@ -37,6 +37,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-tbdname}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tbdname}
       REDIS_URL: redis://redis:6379
       TOKEN_SECRET: ${TOKEN_SECRET:?set TOKEN_SECRET in docker/.env}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in docker/.env}
+      DASHBOARD_URL: ${DASHBOARD_URL:-http://localhost:3000}
       TRUST_PROXY: ${TRUST_PROXY:-false}
       IP_STORAGE: ${IP_STORAGE:-truncated}
       EVENT_VERIFY_WINDOW_MINUTES: ${EVENT_VERIFY_WINDOW_MINUTES:-60}

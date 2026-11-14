@@ -64,6 +64,7 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
       DATABASE_URL,
       REDIS_URL: process.env.REDIS_URL_TEST,
       TOKEN_SECRET: 'e2e-secret-e2e-secret-e2e-secret-e2e',
+      AUTH_SECRET: 'e2e-auth-secret-e2e-auth-secret-e2e',
       IP_STORAGE: 'truncated',
     });
     const ipIntel = new ListIpIntelProvider(CidrSet.from([TOR_IP]), CidrSet.from([]), CidrSet.from([]));

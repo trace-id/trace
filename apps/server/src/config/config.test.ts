@@ -21,7 +21,7 @@ describe('scoring config', () => {
 });
 
 describe('env', () => {
-  const base = { DATABASE_URL: 'postgresql://u:p@localhost:5432/db', TOKEN_SECRET: 'x'.repeat(32) };
+  const base = { DATABASE_URL: 'postgresql://u:p@localhost:5432/db', TOKEN_SECRET: 'x'.repeat(32), AUTH_SECRET: 'y'.repeat(32) };
 
   it('applies defaults', () => {
     const env = parseEnv(base);

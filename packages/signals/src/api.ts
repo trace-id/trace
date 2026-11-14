@@ -92,6 +92,56 @@ export interface WebhookEndpointResponse {
   secret?: string;
 }
 
+// Management API (dashboard session auth).
+
+export type ProjectRoleName = 'owner' | 'admin' | 'viewer';
+
+export interface ProjectResponse {
+  id: string;
+  name: string;
+  retentionDays: number;
+  role: ProjectRoleName;
+  createdAt: string;
+}
+
+export interface MeResponse {
+  user: { id: string; email: string; name: string };
+  projects: ProjectResponse[];
+}
+
+export interface ApiKeyResponse {
+  id: string;
+  type: 'public' | 'secret';
+  name: string | null;
+  prefix: string;
+  allowedOrigins: string[];
+  createdAt: string;
+  revokedAt: string | null;
+  /** Full key, returned only when created. */
+  key?: string;
+}
+
+export interface UsageDay {
+  day: string;
+  events: number;
+  newVisitors: number;
+  suspicious: number;
+}
+
+export interface UsageResponse {
+  days: UsageDay[];
+  suspiciousThreshold: number;
+}
+
+export interface EventSearchItem extends VisitorEventSummary {
+  visitorId: string;
+}
+
+export interface EventSearchResponse {
+  events: EventSearchItem[];
+  nextCursor: string | null;
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string };
 }

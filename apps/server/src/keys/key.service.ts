@@ -37,6 +37,11 @@ export class KeyService {
     return record.key;
   }
 
+  /** Drops a cached key so a revocation applies on this instance immediately. */
+  evict(prefix: string): void {
+    this.cache.delete(prefix);
+  }
+
   private async lookup(prefix: string): Promise<CachedRecord> {
     const now = Date.now();
     const cached = this.cache.get(prefix);

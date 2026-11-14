@@ -36,6 +36,7 @@ describe.skipIf(!DATABASE_URL)('visitors API and retention (Postgres)', () => {
       NODE_ENV: 'test',
       DATABASE_URL,
       TOKEN_SECRET: 'e2e-secret-e2e-secret-e2e-secret-e2e',
+      AUTH_SECRET: 'e2e-auth-secret-e2e-auth-secret-e2e',
       RETENTION_MAX_DAYS: '60',
     });
     const none = CidrSet.from([]);
@@ -143,9 +144,22 @@ describe.skipIf(!DATABASE_URL)('visitors API and retention (Postgres)', () => {
     const goneA = await seedVisitor(a.id, [45], 45);
     const keepB = await seedVisitor(b.id, [1, 10], 1);
 
-    await prisma.$executeRawUnsafe(
-      `CREATE TABLE IF NOT EXISTS "events_2020_01" PARTITION OF "events" FOR VALUES FROM ('2020-01-01 00:00:00+00') TO ('2020-02-01 00:00:00+00')`,
-    );
+    // Same lock_timeout discipline as the server's own partition DDL, retried, so this test
+    // never deadlocks ingest running in parallel test files.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await prisma.$transaction([
+          prisma.$executeRawUnsafe(`SET LOCAL lock_timeout = '500ms'`),
+          prisma.$executeRawUnsafe(
+            `CREATE TABLE IF NOT EXISTS "events_2020_01" PARTITION OF "events" FOR VALUES FROM ('2020-01-01 00:00:00+00') TO ('2020-02-01 00:00:00+00')`,
+          ),
+        ]);
+        break;
+      } catch (err) {
+        if (attempt >= 10) throw err;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
 
     const result = await app.get(MaintenanceService).applyRetention();
     expect(result.partitionsDropped).toBeGreaterThanOrEqual(1);

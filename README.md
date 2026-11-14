@@ -53,7 +53,7 @@ npm install
 npm run build
 
 # Server
-cp apps/server/.env.example apps/server/.env   # set DATABASE_URL, TOKEN_SECRET
+cp apps/server/.env.example apps/server/.env   # set DATABASE_URL, TOKEN_SECRET, AUTH_SECRET
 cd apps/server
 npx prisma migrate deploy
 npm run keys:create -- --project demo --origins http://localhost:5173
@@ -67,7 +67,7 @@ PUBLIC_KEY=pk_... SECRET_KEY=sk_... npm run demo  # http://localhost:5173
 Or with Docker:
 
 ```sh
-cp docker/.env.example docker/.env               # fill in POSTGRES_PASSWORD and TOKEN_SECRET
+cp docker/.env.example docker/.env               # fill in POSTGRES_PASSWORD, TOKEN_SECRET, AUTH_SECRET
 docker compose -f docker/compose.yml up --build -d
 docker compose -f docker/compose.yml exec server \
   node dist/scripts/create-keys.js --project demo --origins http://localhost:5173
