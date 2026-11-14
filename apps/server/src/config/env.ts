@@ -21,6 +21,8 @@ export const envSchema = z.object({
   RATE_LIMIT_INGEST_PER_IP_PER_MIN: perMinute(60),
   RATE_LIMIT_INGEST_PER_VISITOR_PER_MIN: perMinute(30),
   RATE_LIMIT_API_PER_KEY_PER_MIN: perMinute(600),
+  RETENTION_MAX_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
+  MAINTENANCE_INTERVAL_MINUTES: z.coerce.number().int().min(5).max(1440).default(360),
   REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(10_000),
 });
 

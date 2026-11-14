@@ -78,6 +78,35 @@ Errors: `400 invalid_event_id`, `401 invalid_api_key`, `404 not_found`, `410 eve
 
 No auth. `/health` is liveness. `/health/ready` checks Postgres and reports Redis (`{ "status": "ok", "redis": true }`); Redis being down does not fail readiness because the service degrades without it.
 
-## Coming in Phase 2
+## GET /v1/visitors/:visitorId
 
-`GET /v1/visitors/:visitorId` (history, cursor pagination), `DELETE /v1/visitors/:visitorId` (privacy deletion), signed webhooks, management API for the dashboard.
+Header: `Authorization: Bearer sk_...`. Query: `limit` (1 to 50, default 20), `cursor` (from the previous page's `nextCursor`). Events are newest first.
+
+```json
+{
+  "visitorId": "Vx3...",
+  "firstSeenAt": "2026-11-01T09:00:00.000Z",
+  "lastSeenAt": "2026-11-14T10:00:00.000Z",
+  "eventCount": 12,
+  "events": [
+    { "eventId": "...", "createdAt": "...", "matchKind": "token", "confidence": 0.99, "suspectScore": 0, "linkedId": "user-1", "tags": null }
+  ],
+  "nextCursor": "MjAyNi0xMS0x..."
+}
+```
+
+Errors: `400 invalid_visitor_id | invalid_cursor | invalid_request`, `401`, `404 not_found`, `429`.
+
+## DELETE /v1/visitors/:visitorId
+
+Header: `Authorization: Bearer sk_...`. Permanently deletes the visitor, its matching buckets and all its events. Returns `204`, or `404` if the visitor does not exist in this project. Velocity counters in Redis hold no personal data (counts and HyperLogLog sketches keyed by the visitor id) and expire within 25 hours.
+
+**Attack surface (both visitor routes):** IDOR (scoped to the key's project; identical 404s), enumeration (119-bit random ids), DoS (per-key limit, max page 50, keyset pagination).
+
+## Retention
+
+Events older than the project's `retentionDays` (default 30, capped by `RETENTION_MAX_DAYS`, default 90) are deleted, and so are visitors not seen within that window. Whole monthly partitions older than `RETENTION_MAX_DAYS` are dropped. The job runs at startup and every `MAINTENANCE_INTERVAL_MINUTES` (default 360); a lease row keeps it to one instance at a time.
+
+## Coming later in Phase 2
+
+Signed webhooks, management API for the dashboard (keys, origins, retention, usage, event search).

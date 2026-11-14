@@ -88,6 +88,7 @@ npm run accuracy  # fails if precision or recall drop below test/fixtures/accura
 - [Signal catalog](docs/signals.md), with false-positive notes for each signal
 - [Integrating: fail open vs fail closed](docs/integration.md)
 - [Accuracy harness](docs/accuracy.md)
+- [Privacy guide for operators](docs/privacy.md)
 - [Security policy](SECURITY.md) and [contributing](CONTRIBUTING.md)
 
 ## Licensing

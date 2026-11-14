@@ -9,13 +9,14 @@ import { EventsController } from './events/events.controller.js';
 import { HealthController } from './health/health.controller.js';
 import { IdentifyController } from './identify/identify.controller.js';
 import { IdentifyService } from './identify/identify.service.js';
-import { PartitionService } from './infra/partition.service.js';
+import { MaintenanceService } from './infra/maintenance.service.js';
 import { PrismaService } from './infra/prisma.service.js';
 import { RateLimitService } from './infra/rate-limit.service.js';
 import { RedisService } from './infra/redis.service.js';
 import { IP_INTEL, type IpIntelProvider } from './intel/ip-intel.js';
 import { KeyService } from './keys/key.service.js';
 import { VelocityService } from './velocity/velocity.service.js';
+import { VisitorsController } from './visitors/visitors.controller.js';
 
 export interface AppDependencies {
   env: Env;
@@ -28,7 +29,7 @@ export class AppModule {
   static forRoot(deps: AppDependencies): DynamicModule {
     return {
       module: AppModule,
-      controllers: [IdentifyController, EventsController, HealthController],
+      controllers: [IdentifyController, EventsController, VisitorsController, HealthController],
       providers: [
         { provide: ENV, useValue: deps.env },
         { provide: SCORING, useValue: deps.scoring },
@@ -41,7 +42,7 @@ export class AppModule {
         KeyService,
         VelocityService,
         IdentifyService,
-        PartitionService,
+        MaintenanceService,
       ],
     };
   }

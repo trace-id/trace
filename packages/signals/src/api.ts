@@ -47,6 +47,26 @@ export interface EventResponse {
   expiresAt: string;
 }
 
+export interface VisitorEventSummary {
+  eventId: string;
+  createdAt: string;
+  matchKind: MatchKind;
+  confidence: number;
+  suspectScore: number;
+  linkedId: string | null;
+  tags: Record<string, TagValue> | null;
+}
+
+export interface VisitorHistoryResponse {
+  visitorId: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  eventCount: number;
+  events: VisitorEventSummary[];
+  /** Pass as `cursor` to get the next (older) page; null on the last page. */
+  nextCursor: string | null;
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string };
 }

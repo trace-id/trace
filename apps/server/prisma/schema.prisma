@@ -69,6 +69,14 @@ model VisitorBucket {
   @@map("visitor_buckets")
 }
 
+model MaintenanceLease {
+  name   String   @id @db.VarChar(64)
+  holder String   @db.VarChar(64)
+  until  DateTime @db.Timestamptz(3)
+
+  @@map("maintenance_leases")
+}
+
 /// Range-partitioned by month on createdAt (see the init migration); the primary key
 /// includes createdAt because Postgres requires the partition key in unique constraints.
 model Event {
