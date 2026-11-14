@@ -4,7 +4,7 @@
 
 Open-source, self-hostable device identification and fraud signals. A page embeds the browser SDK, which collects device signals and sends them to your server. The server returns a stable `visitorId`, a suspect score, and the reasons behind that score. Your backend then verifies the event server-side before trusting it.
 
-**Status: Phase 2 in progress.** Identification, verification, webhooks, retention and deletion, the management API and the dashboard work end to end. Remaining for Phase 2: the rest of the signal catalog, the React SDK, a bundled browser build and the docs site. Do not use this in production yet.
+**Status: Phase 2 complete, pending the 15-minute self-host test by a new user.** Identification, verification, all web signals, webhooks, retention and deletion, the management API, the dashboard, the React SDK, a single-file browser build and the docs site work end to end; the security checklist is documented with evidence. Next is a shadow-mode trial on a real site (Phase 3). Do not use this to block users yet.
 
 ## How it works
 
@@ -98,7 +98,7 @@ Browse locally as a site with `npm run docs:dev`, or read the Markdown here:
 - [SDKs, React, webhooks, fail open vs fail closed](docs/integration.md)
 - [Accuracy harness](docs/accuracy.md)
 - [Privacy guide for operators](docs/privacy.md)
-- [Security policy](SECURITY.md) and [contributing](CONTRIBUTING.md)
+- [Security checklist](docs/security-checklist.md), [security policy](SECURITY.md) and [contributing](CONTRIBUTING.md)
 
 ## Licensing
 

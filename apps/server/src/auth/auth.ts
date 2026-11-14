@@ -6,6 +6,21 @@ import { type PrismaService } from '../infra/prisma.service.js';
 
 export const AUTH = Symbol('AUTH');
 
+export const CLIENT_IP_HEADER = 'x-tbdname-client-ip';
+
+/** Client-controlled headers that IP-aware libraries might otherwise trust. */
+export const SPOOFABLE_IP_HEADERS = [
+  'x-forwarded-for',
+  'x-real-ip',
+  'x-client-ip',
+  'cf-connecting-ip',
+  'true-client-ip',
+  'fastly-client-ip',
+  'x-cluster-client-ip',
+  'forwarded',
+  CLIENT_IP_HEADER,
+];
+
 /** The first account may always be created; later ones only when sign-up is enabled. */
 export async function signupAllowed(prisma: PrismaService, env: Env): Promise<boolean> {
   if (env.DASHBOARD_ALLOW_SIGNUP) return true;
@@ -27,7 +42,23 @@ export function createAuth(env: Env, prisma: PrismaService) {
     },
     session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
     telemetry: { enabled: false },
-    advanced: { useSecureCookies: env.DASHBOARD_URL.startsWith('https://') },
+    // On in every environment (Better Auth's default is production only). In-memory, so the
+    // limits apply per server instance.
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+      customRules: {
+        '/sign-in/email': { window: 60, max: 10 },
+        '/sign-up/email': { window: 3600, max: 5 },
+      },
+    },
+    advanced: {
+      useSecureCookies: env.DASHBOARD_URL.startsWith('https://'),
+      // Only the header the server itself sets from the TRUST_PROXY-aware request IP;
+      // client-sent X-Forwarded-For is stripped so it cannot rotate rate-limit buckets.
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
+    },
     databaseHooks: {
       user: {
         create: {

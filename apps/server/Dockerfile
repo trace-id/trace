@@ -31,10 +31,13 @@ COPY --from=build /repo/packages/signals/dist packages/signals/dist
 COPY --from=build /repo/packages/sdk-js/package.json packages/sdk-js/package.json
 COPY --from=build /repo/packages/sdk-js/dist packages/sdk-js/dist
 COPY --from=build /repo/apps/server/package.json apps/server/package.json
+# Packages npm could not hoist (Prisma, Better Auth) live in the workspace's own node_modules.
+COPY --from=build /repo/apps/server/node_modules apps/server/node_modules
 COPY --from=build /repo/apps/server/dist apps/server/dist
 COPY --from=build /repo/apps/server/prisma apps/server/prisma
+COPY --from=build /repo/apps/server/prisma.config.ts apps/server/prisma.config.ts
 COPY scoring.default.json ./
 WORKDIR /app/apps/server
 USER node
 EXPOSE 8080
-CMD ["sh", "-c", "node ../../node_modules/prisma/build/index.js migrate deploy && exec node dist/main.js"]
+CMD ["sh", "-c", "npx --no-install prisma migrate deploy && exec node dist/main.js"]

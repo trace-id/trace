@@ -1,3 +1,4 @@
+import './config/load-dotenv.js';
 import { Logger } from '@nestjs/common';
 import { createApp } from './app.factory.js';
 import { parseEnv } from './config/env.js';

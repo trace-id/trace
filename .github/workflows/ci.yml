@@ -17,6 +17,8 @@ jobs:
           POSTGRES_USER: tbdname
           POSTGRES_PASSWORD: tbdname
           POSTGRES_DB: tbdname_test
+          # Non-UTC on purpose: catches timestamps written in the session timezone.
+          TZ: Asia/Kolkata
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U tbdname" --health-interval 5s --health-timeout 3s --health-retries 20

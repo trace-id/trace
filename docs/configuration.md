@@ -21,6 +21,8 @@ All configuration is through environment variables, validated at startup. Invali
 | `TRUST_PROXY` | `false` | `false`, `true`, or a comma list of proxy IPs/CIDRs. |
 | `REQUEST_TIMEOUT_MS` | `10000` | Per-request timeout. |
 | `REDIS_URL` | unset | Redis for rate limits and velocity. Optional. |
+| `DB_STATEMENT_TIMEOUT_MS` | `5000` | Postgres statement timeout per connection. |
+| `DB_POOL_MAX` | `10` | Postgres connections per server process. |
 
 ## Server: data and privacy
 

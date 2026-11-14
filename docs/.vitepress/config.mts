@@ -35,6 +35,7 @@ export default defineConfig({
           { text: 'Configuration reference', link: '/configuration' },
           { text: 'Privacy guide', link: '/privacy' },
           { text: 'Accuracy', link: '/accuracy' },
+          { text: 'Security checklist', link: '/security-checklist' },
         ],
       },
     ],

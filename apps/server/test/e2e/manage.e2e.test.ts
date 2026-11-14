@@ -1,5 +1,5 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import {
   type ApiKeyResponse,
   type EventResponse,
@@ -13,6 +13,7 @@ import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/sign
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
+import { createPrismaClient } from '../../src/infra/prisma-client.js';
 import { parseEnv } from '../../src/config/env.js';
 import { CidrSet } from '../../src/intel/cidr.js';
 import { ListIpIntelProvider } from '../../src/intel/ip-intel.js';
@@ -49,7 +50,7 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
   }
 
   beforeAll(async () => {
-    prisma = new PrismaClient({ datasources: { db: { url: DATABASE_URL } } });
+    prisma = createPrismaClient(DATABASE_URL as string);
     await prisma.user.deleteMany({ where: { email: { in: emails } } });
     closed = await boot(false);
     open = await boot(true);
@@ -184,6 +185,21 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
 
     expect((await call('alice', 'POST', `/v1/projects/${projectId}/keys/${pub.id}/revoke`)).statusCode).toBe(201);
     expect((await identify()).statusCode).toBe(401);
+  });
+
+  it('rate-limits password guessing, and forged X-Forwarded-For does not reset the limit', async () => {
+    const attempt = (i: number) =>
+      http.inject({
+        method: 'POST',
+        url: '/api/auth/sign-in/email',
+        headers: { 'content-type': 'application/json', origin: DASHBOARD, 'x-forwarded-for': `198.51.100.${i}` },
+        payload: { email: emails[2], password: `wrong-password-${i}` },
+        remoteAddress: '203.0.113.50',
+      });
+    const statuses: number[] = [];
+    for (let i = 1; i <= 12; i++) statuses.push((await attempt(i)).statusCode);
+    expect(statuses.slice(0, 10).every((s) => s === 401 || s === 400)).toBe(true);
+    expect(statuses.slice(10)).toEqual([429, 429]);
   });
 
   it('validates project settings against server limits', async () => {

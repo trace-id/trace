@@ -1,10 +1,11 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import { type VisitorHistoryResponse } from '@tbdname/signals/api';
 import { TEST_SCORING_CONFIG } from '@tbdname/signals/testing';
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
+import { createPrismaClient } from '../../src/infra/prisma-client.js';
 import { newVisitorId, uuidv7 } from '../../src/common/ids.js';
 import { parseEnv } from '../../src/config/env.js';
 import { MaintenanceService } from '../../src/infra/maintenance.service.js';
@@ -22,7 +23,7 @@ describe.skipIf(!DATABASE_URL)('visitors API and retention (Postgres)', () => {
   const projects: { id: string; sec: string }[] = [];
 
   beforeAll(async () => {
-    prisma = new PrismaClient({ datasources: { db: { url: DATABASE_URL } } });
+    prisma = createPrismaClient(DATABASE_URL as string);
     for (const [name, retentionDays] of [
       ['visitors-a', 30],
       ['visitors-b', 7],

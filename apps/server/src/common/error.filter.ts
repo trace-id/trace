@@ -1,6 +1,7 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, Logger } from '@nestjs/common';
 import { type FastifyReply } from 'fastify';
 import { toErrorReply } from './error-body.js';
+import { describeError } from './log-safe.js';
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
@@ -10,7 +11,7 @@ export class ErrorFilter implements ExceptionFilter {
     const reply = host.switchToHttp().getResponse<FastifyReply>();
     const { status, body, retryAfterSec } = toErrorReply(exception);
     if (status >= 500) {
-      this.logger.error(exception instanceof Error ? (exception.stack ?? exception.message) : 'Unknown error');
+      this.logger.error(describeError(exception));
     }
     if (retryAfterSec !== undefined) void reply.header('Retry-After', String(retryAfterSec));
     void reply.status(status).send(body);

@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
 import { type WebhookPayload, type WebhookType } from '@tbdname/signals/api';
+import { describeError } from '../common/log-safe.js';
 import { ENV, type Env } from '../config/env.js';
 import { PrismaService } from '../infra/prisma.service.js';
 import { openSecret } from './secret-box.js';
@@ -60,7 +61,7 @@ export class WebhookWorkerService implements OnApplicationBootstrap, OnModuleDes
     try {
       processed = await this.processDue();
     } catch (err) {
-      this.logger.error(`webhook tick failed: ${err instanceof Error ? err.message : 'unknown'}`);
+      this.logger.error(`webhook tick failed: ${describeError(err)}`);
     }
     this.schedule(processed === BATCH ? 0 : this.env.WEBHOOK_POLL_INTERVAL_MS);
   }

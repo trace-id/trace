@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
 import { type Prisma } from '@prisma/client';
+import { describeError } from '../common/log-safe.js';
 import { ENV, type Env } from '../config/env.js';
 import { PrismaService } from './prisma.service.js';
 
@@ -55,7 +56,7 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
         `retention: events=${r.eventsDeleted} deliveries=${r.deliveriesDeleted} visitors=${r.visitorsDeleted} partitions=${r.partitionsDropped}`,
       );
     } catch (err) {
-      this.logger.error(`maintenance failed: ${err instanceof Error ? err.message : 'unknown'}`);
+      this.logger.error(`maintenance failed: ${describeError(err)}`);
     }
   }
 
@@ -72,11 +73,17 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
     return result;
   }
 
+  /** Batch deletes may outlast the request-path statement timeout; give each its own budget. */
+  private async slow(run: () => Prisma.PrismaPromise<number>): Promise<number> {
+    const [, n] = await this.prisma.$transaction([this.prisma.$executeRaw`SET LOCAL statement_timeout = '120s'`, run()]);
+    return n;
+  }
+
   async ensurePartitions(): Promise<void> {
     try {
       await this.ddl(() => this.prisma.$executeRaw`SELECT ensure_event_partitions(${MONTHS_AHEAD}::integer)`);
     } catch (err) {
-      this.logger.error(`ensure_event_partitions failed: ${err instanceof Error ? err.message : 'unknown'}`);
+      this.logger.error(`ensure_event_partitions failed: ${describeError(err)}`);
     }
   }
 
@@ -101,22 +108,22 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       const days = Math.min(Math.max(project.retentionDays, 1), maxDays);
       const cutoff = new Date(now.getTime() - days * DAY_MS);
       for (;;) {
-        const n = await this.prisma.$executeRaw`
+        const n = await this.slow(() => this.prisma.$executeRaw`
           DELETE FROM "events" WHERE ("id", "createdAt") IN (
             SELECT "id", "createdAt" FROM "events"
             WHERE "projectId" = ${project.id}::uuid AND "createdAt" < ${cutoff}
             LIMIT ${DELETE_BATCH}
-          )`;
+          )`);
         eventsDeleted += n;
         if (n < DELETE_BATCH) break;
       }
       for (;;) {
-        const n = await this.prisma.$executeRaw`
+        const n = await this.slow(() => this.prisma.$executeRaw`
           DELETE FROM "visitors" WHERE "id" IN (
             SELECT "id" FROM "visitors"
             WHERE "projectId" = ${project.id}::uuid AND "lastSeenAt" < ${cutoff}
             LIMIT ${DELETE_BATCH}
-          )`;
+          )`);
         visitorsDeleted += n;
         if (n < DELETE_BATCH) break;
       }
@@ -134,7 +141,7 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       );
       partitionsDropped = Number(dropped[0]?.n ?? 0);
     } catch (err) {
-      this.logger.warn(`partition drop deferred: ${err instanceof Error ? err.message.slice(0, 120) : 'unknown'}`);
+      this.logger.warn(`partition drop deferred: ${describeError(err).slice(0, 200)}`);
     }
     return { eventsDeleted, deliveriesDeleted, visitorsDeleted, partitionsDropped };
   }

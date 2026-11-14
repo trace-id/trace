@@ -1,5 +1,6 @@
+import '../config/load-dotenv.js';
 import { parseArgs } from 'node:util';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../infra/prisma-client.js';
 import { generateKey } from '../keys/key-crypto.js';
 import { isValidOriginPattern } from '../keys/origins.js';
 
@@ -28,7 +29,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const prisma = new PrismaClient();
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not set');
+    process.exit(1);
+  }
+  const prisma = createPrismaClient(process.env.DATABASE_URL);
   try {
     const projectId =
       values['project-id'] ?? (await prisma.project.create({ data: { name: values.project ?? 'default' } })).id;

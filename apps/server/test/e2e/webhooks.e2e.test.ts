@@ -1,13 +1,14 @@
 import { createServer, type Server } from 'node:http';
 import { type AddressInfo } from 'node:net';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import { verifyWebhook } from '@tbdname/sdk-node/webhooks';
 import { type IdentifyResponse, type WebhookEndpointResponse } from '@tbdname/signals/api';
 import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/signals/testing';
 import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
+import { createPrismaClient } from '../../src/infra/prisma-client.js';
 import { parseEnv } from '../../src/config/env.js';
 import { CidrSet } from '../../src/intel/cidr.js';
 import { ListIpIntelProvider } from '../../src/intel/ip-intel.js';
@@ -44,7 +45,7 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
     await new Promise<void>((r) => receiver.listen(0, '127.0.0.1', r));
     receiverUrl = `http://127.0.0.1:${(receiver.address() as AddressInfo).port}/hook`;
 
-    prisma = new PrismaClient({ datasources: { db: { url: DATABASE_URL } } });
+    prisma = createPrismaClient(DATABASE_URL as string);
     for (const name of ['hooks-a', 'hooks-b']) {
       const project = await prisma.project.create({ data: { name } });
       const pub = generateKey('public');

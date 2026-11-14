@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type FastifyInstance } from 'fastify';
 import { type AppDependencies, AppModule } from './app.module.js';
-import { AUTH, type Auth, toHeaders } from './auth/auth.js';
+import { AUTH, type Auth, CLIENT_IP_HEADER, SPOOFABLE_IP_HEADERS, toHeaders } from './auth/auth.js';
 import { parseTrustProxy } from './config/env.js';
 
 export const BODY_LIMIT_BYTES = 64 * 1024;
@@ -49,6 +49,8 @@ function mountAuth(instance: FastifyInstance, auth: Auth, baseUrl: string): void
       const body = req.method === 'POST' && req.body !== undefined ? JSON.stringify(req.body) : undefined;
       const headers = toHeaders(req.headers);
       headers.delete('content-length');
+      for (const name of SPOOFABLE_IP_HEADERS) headers.delete(name);
+      headers.set(CLIENT_IP_HEADER, req.ip);
       const response = await auth.handler(
         new Request(new URL(req.url, baseUrl), { method: req.method, headers, ...(body ? { body } : {}) }),
       );

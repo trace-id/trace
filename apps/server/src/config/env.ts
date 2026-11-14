@@ -9,6 +9,8 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url().optional(),
+  DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).max(600_000).default(5000),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(200).default(10),
   TOKEN_SECRET: z.string().min(32, 'TOKEN_SECRET must be at least 32 characters'),
   TRUST_PROXY: z.string().default('false'),
   SCORING_CONFIG_PATH: optionalPath,

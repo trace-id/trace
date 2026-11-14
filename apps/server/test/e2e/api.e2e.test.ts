@@ -1,10 +1,11 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import { type EventResponse, type IdentifyResponse } from '@tbdname/signals/api';
 import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/signals/testing';
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
+import { createPrismaClient } from '../../src/infra/prisma-client.js';
 import { uuidv7 } from '../../src/common/ids.js';
 import { parseEnv } from '../../src/config/env.js';
 import { CidrSet } from '../../src/intel/cidr.js';
@@ -41,7 +42,7 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
   const keys = { pub: '', sec: '', otherSec: '' };
 
   beforeAll(async () => {
-    prisma = new PrismaClient({ datasources: { db: { url: DATABASE_URL } } });
+    prisma = createPrismaClient(DATABASE_URL as string);
     const make = async (name: string) => {
       const project = await prisma.project.create({ data: { name } });
       projectIds.push(project.id);
@@ -218,6 +219,14 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     const legacy = request();
     expect('devtools' in legacy.signals).toBe(false);
     expect((await identify(legacy)).statusCode).toBe(200);
+  });
+
+  it('stores instants correctly whatever the database TimeZone is', async () => {
+    const { eventId } = (await identify(request())).json<IdentifyResponse>();
+    const [row] = await prisma.$queryRaw<{ skew: number; tz: string }[]>`
+      SELECT EXTRACT(EPOCH FROM (now() - "createdAt"))::float AS skew, current_setting('TimeZone') AS tz
+      FROM "events" WHERE "id" = ${eventId}::uuid`;
+    expect(Math.abs(row?.skew ?? Infinity)).toBeLessThan(60);
   });
 
   it('serves the browser SDK bundle as cacheable public code, from an allow-list only', async () => {
