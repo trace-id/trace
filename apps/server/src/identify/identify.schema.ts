@@ -59,9 +59,11 @@ const signals = z
         incognitoLikely: z.boolean(),
         incognitoMethod: identifier.nullable(),
         storageQuotaMb: z.number().finite().min(0).max(1e9).nullable(),
+        braveLikely: z.boolean().optional(),
       })
       .strict(),
     storage: z.object({ cookie: z.boolean(), localStorage: z.boolean(), indexedDb: z.boolean() }).strict(),
+    devtools: z.object({ likely: z.boolean(), method: identifier.nullable() }).strict().optional(),
     collectMs: z.number().finite().min(0).max(600_000),
   })
   .strict();

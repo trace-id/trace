@@ -200,6 +200,26 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     expect(res.json()).toMatchObject({ error: { code: 'event_expired' } });
   });
 
+  it('scores the newer client signals, and still accepts payloads without them', async () => {
+    const signals = {
+      ...makePayload({
+        components: DEVICE,
+        attributes: { webglRenderer: 'ANGLE (VMware, Inc., VMware SVGA 3D)' },
+        privacy: { braveLikely: true },
+      }),
+      devtools: { likely: true, method: 'widthGap' },
+    };
+    const res = await identify({ ...request(), signals });
+    expect(res.statusCode).toBe(200);
+    const event = (await verify(res.json<IdentifyResponse>().eventId)).json<EventResponse>();
+    expect(event.reasons.map((r) => r.signal).sort()).toEqual(['devtools', 'privacyBrowser', 'virtualMachine']);
+    expect(event.signals.highActivity.detected).toBe(false);
+
+    const legacy = request();
+    expect('devtools' in legacy.signals).toBe(false);
+    expect((await identify(legacy)).statusCode).toBe(200);
+  });
+
   it('serves health without auth and 404s unknown routes in the standard shape', async () => {
     expect((await http.inject({ method: 'GET', url: '/health' })).json()).toEqual({ status: 'ok' });
     const missing = await http.inject({ method: 'GET', url: '/v1/nope' });

@@ -15,6 +15,8 @@ describe('collectSignals', () => {
     expect(Array.isArray(p.bot.automationGlobals)).toBe(true);
     expect(Array.isArray(p.tamper.nativeOverrides)).toBe(true);
     expect(p.collectMs).toBeGreaterThanOrEqual(0);
+    expect(p.devtools).toEqual({ likely: false, method: null });
+    expect(typeof p.privacy.braveLikely).toBe('boolean');
   });
 
   it('is stable across calls', async () => {

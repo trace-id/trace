@@ -11,9 +11,14 @@ async function main(): Promise<void> {
     torExitListFile: env.TOR_EXIT_LIST_FILE,
     datacenterCidrFile: env.DATACENTER_CIDR_FILE,
     blocklistFile: env.IP_BLOCKLIST_FILE,
+    datacenterAsnFile: env.DATACENTER_ASN_FILE,
+    geoipCountryDb: env.GEOIP_COUNTRY_DB,
+    geoipAsnDb: env.GEOIP_ASN_DB,
   });
-  const sizes = ipIntel.sizes;
-  logger.log(`ip lists loaded: tor=${sizes.tor} datacenter=${sizes.datacenter} blocklist=${sizes.blocklist}`);
+  const s = ipIntel.sizes;
+  logger.log(
+    `ip intel: tor=${s.tor} datacenter=${s.datacenter} datacenterAsns=${s.datacenterAsns} blocklist=${s.blocklist} geo=${s.geo}`,
+  );
 
   const app = await createApp({ env, scoring: loadScoringConfig(env.SCORING_CONFIG_PATH), ipIntel });
   await app.listen(env.PORT, env.HOST);

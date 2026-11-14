@@ -33,6 +33,7 @@ const scoringSchema = z
     velocity: z
       .object({
         eventsPerVisitor1h: z.number().int().min(1),
+        eventsPerVisitor24h: z.number().int().min(1),
         visitorsPerIp1h: z.number().int().min(1),
         ipsPerVisitor24h: z.number().int().min(1),
         visitorsPerLinkedId24h: z.number().int().min(1),

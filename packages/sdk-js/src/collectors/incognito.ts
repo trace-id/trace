@@ -26,6 +26,11 @@ async function safariPrivate(): Promise<boolean> {
  * heap limit; Firefox private windows hide serviceWorker; Safari private windows reject OPFS.
  */
 export async function readPrivacy(timeoutMs: number): Promise<PrivacyIndicators> {
+  const result = await readIncognito(timeoutMs);
+  return { ...result, braveLikely: safe(() => 'brave' in navigator, false) };
+}
+
+async function readIncognito(timeoutMs: number): Promise<PrivacyIndicators> {
   const ua = safe(() => navigator.userAgent, '');
   const family = browserFamily(ua);
   const storageQuotaMb = await safeAsync(quotaMb, null, timeoutMs);

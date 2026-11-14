@@ -23,9 +23,22 @@
       "userAgentFamily": 2
     },
     "buckets": [
-      ["canvas", "webgl", "audio"],
-      ["screen", "hardware", "timezone", "platform"],
-      ["fonts", "webglParams", "languages"]
+      [
+        "canvas",
+        "webgl",
+        "audio"
+      ],
+      [
+        "screen",
+        "hardware",
+        "timezone",
+        "platform"
+      ],
+      [
+        "fonts",
+        "webglParams",
+        "languages"
+      ]
     ]
   },
   "suspect": {
@@ -36,11 +49,16 @@
       "datacenterIp": 15,
       "ipBlocklist": 40,
       "velocity": 20,
-      "incognito": 5
+      "incognito": 5,
+      "devtools": 5,
+      "virtualMachine": 15,
+      "privacyBrowser": 5,
+      "highActivity": 15
     }
   },
   "velocity": {
     "eventsPerVisitor1h": 60,
+    "eventsPerVisitor24h": 500,
     "visitorsPerIp1h": 20,
     "ipsPerVisitor24h": 10,
     "visitorsPerLinkedId24h": 5

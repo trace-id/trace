@@ -37,6 +37,7 @@ export class VelocityService {
     const p = input.projectId;
     const ev = bucketKeys(`vel:${p}:ev:${input.visitorId}`, now, SHORT_BUCKET_MS, SHORT_BUCKETS);
     const vip = bucketKeys(`vel:${p}:vip:${input.ipKey}`, now, SHORT_BUCKET_MS, SHORT_BUCKETS);
+    const ev24 = bucketKeys(`vel:${p}:ev24:${input.visitorId}`, now, LONG_BUCKET_MS, LONG_BUCKETS);
     const ipv = bucketKeys(`vel:${p}:ipv:${input.visitorId}`, now, LONG_BUCKET_MS, LONG_BUCKETS);
     const link = input.linkedId
       ? bucketKeys(`vel:${p}:lnk:${short(input.linkedId)}`, now, LONG_BUCKET_MS, LONG_BUCKETS)
@@ -47,10 +48,12 @@ export class VelocityService {
     const results = await this.redis.run(async (client) => {
       const pipe = client.pipeline();
       pipe.incr(ev[0] as string).expire(ev[0] as string, shortTtl);
+      pipe.incr(ev24[0] as string).expire(ev24[0] as string, longTtl);
       pipe.pfadd(vip[0] as string, input.visitorId).expire(vip[0] as string, shortTtl);
       pipe.pfadd(ipv[0] as string, input.ipKey).expire(ipv[0] as string, longTtl);
       if (link) pipe.pfadd(link[0] as string, input.visitorId).expire(link[0] as string, longTtl);
       pipe.mget(...ev);
+      pipe.mget(...ev24);
       pipe.pfcount(...vip);
       pipe.pfcount(...ipv);
       if (link) pipe.pfcount(...link);
@@ -58,13 +61,14 @@ export class VelocityService {
     });
     if (!results || results.some(([err]) => err)) return null;
 
-    const reads = results.slice(link ? 8 : 6).map(([, value]) => value);
-    const events = (reads[0] as (string | null)[]).reduce((sum, v) => sum + (v ? Number(v) : 0), 0);
+    const reads = results.slice(link ? 10 : 8).map(([, value]) => value);
+    const sum = (values: unknown) => (values as (string | null)[]).reduce((t, v) => t + (v ? Number(v) : 0), 0);
     return {
-      eventsPerVisitor1h: events,
-      visitorsPerIp1h: Number(reads[1]),
-      ipsPerVisitor24h: Number(reads[2]),
-      visitorsPerLinkedId24h: link ? Number(reads[3]) : null,
+      eventsPerVisitor1h: sum(reads[0]),
+      eventsPerVisitor24h: sum(reads[1]),
+      visitorsPerIp1h: Number(reads[2]),
+      ipsPerVisitor24h: Number(reads[3]),
+      visitorsPerLinkedId24h: link ? Number(reads[4]) : null,
     };
   }
 }

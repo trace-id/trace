@@ -2,7 +2,7 @@
 
 Each signal is defined in [`packages/signals/src/definitions.ts`](../packages/signals/src/definitions.ts) and contributes its weight from [`scoring.default.json`](../scoring.default.json) to the suspect score (0 to 100, capped) when detected. Every event lists the contributing signals in `reasons`.
 
-Phase 1 ships the signals below. VPN detection beyond datacenter ranges, geolocation, developer tools, virtual machine, privacy-focused browser and high-activity device arrive in Phase 2.
+All web signals from the plan are implemented. Commercial VPN detection beyond datacenter IP ranges and ASNs needs a reputation provider, which operators can plug in (see IP intelligence below).
 
 | Signal | Default weight | How it is detected | False positives |
 | --- | ---: | --- | --- |
@@ -13,15 +13,25 @@ Phase 1 ships the signals below. VPN detection beyond datacenter ranges, geoloca
 | `ipBlocklist` | 40 | Request IP in an operator-supplied blocklist (`IP_BLOCKLIST_FILE`). | Shared IPs (CGNAT, mobile carriers, universities) can put innocent users on a list. |
 | `velocity` | 20 | Redis counters over sliding windows: events per visitor per hour, distinct visitors per IP per hour, distinct IPs per visitor per day, distinct visitors per `linkedId` per day. Thresholds in `scoring.default.json`. | Offices, schools and mobile carriers put many real visitors behind one IP. Raise `visitorsPerIp1h` for CGNAT-heavy audiences. Not evaluated (reported as unavailable) without Redis. |
 | `incognito` | 5 | Chromium: storage quota below twice the JS heap limit. Firefox: `serviceWorker` hidden in a secure context. Safari: OPFS rejects with "unknown transient reason". | Low-disk devices get small quotas and can look private; browsers change these behaviours between releases. Low weight on purpose. |
+| `devtools` | 5 | Window more than 160 px wider (or 280 px taller) than the viewport, the footprint of docked developer tools. Desktop only. | Sidebars, zoom and some window managers cause the same gap; undocked devtools are missed. |
+| `virtualMachine` | 15 | WebGL renderer names a hypervisor adapter (VMware, VirtualBox, Parallels, QEMU/virgl, Hyper-V) or a software rasterizer (llvmpipe, SwiftShader, Microsoft Basic Render). | Remote desktops, thin clients, Linux without GPU drivers, hardware acceleration turned off. |
+| `privacyBrowser` | 5 | Brave (`navigator.brave`), Tor or Mullvad Browser (Firefox, UTC timezone, letterboxed screen), DuckDuckGo, or canvas farbling. | These are legitimate privacy choices. Use it to explain lower confidence, not to block. |
+| `highActivity` | 15 | More than `eventsPerVisitor24h` (default 500) events from one visitor in 24 hours (Redis). | Kiosks, QA machines, single-page apps that identify on every route change. |
 
-## IP lists
+## IP intelligence
+
+### Lists
 
 The open build never bundles IP data. Lists are plain text, one IP or CIDR per line, `#` comments allowed, IPv4 and IPv6 both supported. Examples of public sources an operator may choose to use (check each source's terms yourself):
 
 - Tor exit list: `https://check.torproject.org/torbulkexitlist`
 - Cloud provider ranges published by the providers themselves (AWS `ip-ranges.json`, Google Cloud `cloud.json`, Azure service tags).
 
-Lists are loaded at startup. A pluggable `IpIntelProvider` interface (`apps/server/src/intel/ip-intel.ts`) lets you add GeoIP/ASN or reputation providers.
+### GeoIP and ASN
+
+Set `GEOIP_COUNTRY_DB` (a Country or City database) and/or `GEOIP_ASN_DB` to MaxMind-format `.mmdb` files you obtained yourself, for example GeoLite2 under its own license or a commercial equivalent. They are never bundled because their licenses forbid redistribution. With an ASN database, `DATACENTER_ASN_FILE` (one ASN per line, `AS16509` or `16509`) also marks hosting networks as `datacenterIp`. Country and ASN appear in every event (`ip.country`, `ip.asn`).
+
+Everything is loaded at startup. A pluggable `IpIntelProvider` interface (`apps/server/src/intel/ip-intel.ts`) lets you add GeoIP/ASN or reputation providers.
 
 ## Identification components
 

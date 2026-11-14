@@ -3,6 +3,7 @@ import { PAYLOAD_VERSION, type Components, type SignalPayload } from '@tbdname/s
 import { readAudio } from './collectors/audio.js';
 import { readBotIndicators } from './collectors/bot.js';
 import { readCanvas } from './collectors/canvas.js';
+import { readDevtools } from './collectors/devtools.js';
 import { hardwareKey, readAttributes, screenKey } from './collectors/environment.js';
 import { readCssFeatures, readMediaFeatures } from './collectors/features.js';
 import { readFonts } from './collectors/fonts.js';
@@ -63,6 +64,7 @@ export async function collectSignals(options: CollectOptions = {}): Promise<Sign
     tamper: readTamperIndicators(canvas.noisy),
     privacy,
     storage: readAvailability(),
+    devtools: readDevtools(),
     collectMs: Math.max(0, Math.round(ended - started)),
   };
 }

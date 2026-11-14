@@ -152,6 +152,79 @@ const incognito: SignalDefinition = {
   },
 };
 
+const devtools: SignalDefinition = {
+  id: 'devtools',
+  title: 'Developer tools open',
+  description: 'The browser window is much larger than its viewport, the usual footprint of docked developer tools.',
+  falsePositives:
+    'Browser sidebars, zoom levels and some window managers create the same gap; undocked devtools are not detected. Weak by design; mostly useful together with other signals.',
+  evaluate(ctx) {
+    const d = ctx.payload.devtools;
+    return { detected: d?.likely === true, details: { method: d?.method ?? null, reported: d !== undefined } };
+  },
+};
+
+/** GPU renderer strings of hypervisors and software rasterizers. */
+const VM_RENDERERS = /vmware|virtualbox|vbox|svga3d|parallels|qemu|virgl|red hat|hyper-v|microsoft basic render|llvmpipe|softpipe|swiftshader/i;
+
+const virtualMachine: SignalDefinition = {
+  id: 'virtualMachine',
+  title: 'Virtual machine',
+  description:
+    'The WebGL renderer is a hypervisor display adapter (VMware, VirtualBox, Parallels, QEMU/virgl, Hyper-V) or a software rasterizer (llvmpipe, SwiftShader).',
+  falsePositives:
+    'Remote desktops, some thin clients, Linux machines without GPU drivers, and browsers with hardware acceleration turned off report software renderers.',
+  evaluate(ctx) {
+    const renderer = ctx.payload.attributes.webglRenderer;
+    const match = renderer ? VM_RENDERERS.exec(renderer) : null;
+    return { detected: match !== null, details: { renderer: renderer ?? null, matched: match?.[0].toLowerCase() ?? null } };
+  },
+};
+
+function looksLikeTorBrowser(ctx: EvaluationContext): boolean {
+  const a = ctx.payload.attributes;
+  const firefox = /Firefox\//.test(a.userAgent ?? '') && !/Seamonkey/i.test(a.userAgent ?? '');
+  const utc = a.timezone === 'UTC' || a.timezone === 'Etc/UTC';
+  // Letterboxing rounds the content area to multiples of 200x100.
+  const letterboxed =
+    a.availWidth !== null && a.availHeight !== null && a.availWidth % 200 === 0 && a.availHeight % 100 === 0;
+  return firefox && utc && letterboxed;
+}
+
+const privacyBrowser: SignalDefinition = {
+  id: 'privacyBrowser',
+  title: 'Privacy-focused browser',
+  description:
+    'Brave, Tor Browser or Mullvad Browser (Firefox with UTC timezone and letterboxing), DuckDuckGo, or any browser that randomises canvas output.',
+  falsePositives:
+    'These are legitimate choices by privacy-conscious people. Use it to explain lower identification confidence, not to block.',
+  evaluate(ctx) {
+    const ua = ctx.payload.attributes.userAgent ?? '';
+    const reasons: string[] = [];
+    if (ctx.payload.privacy.braveLikely) reasons.push('brave');
+    if (looksLikeTorBrowser(ctx)) reasons.push('torOrMullvad');
+    if (/DuckDuckGo\/|Ddg\//.test(ua)) reasons.push('duckduckgo');
+    if (ctx.payload.tamper.canvasNoise) reasons.push('canvasNoise');
+    return { detected: reasons.length > 0, details: { reasons } };
+  },
+};
+
+const highActivity: SignalDefinition = {
+  id: 'highActivity',
+  title: 'High-activity device',
+  description: 'One visitor produced more events in the last 24 hours than the configured threshold.',
+  falsePositives:
+    'Shared kiosks, QA machines and power users of single-page apps that identify on every route change. Identify on meaningful actions, not every page view.',
+  evaluate(ctx, config): SignalResult {
+    const n = ctx.velocity?.eventsPerVisitor24h ?? null;
+    if (n === null) return { detected: false, details: { available: false } };
+    return {
+      detected: n > config.velocity.eventsPerVisitor24h,
+      details: { available: true, eventsPerVisitor24h: n, threshold: config.velocity.eventsPerVisitor24h },
+    };
+  },
+};
+
 export const SIGNAL_DEFINITIONS: readonly SignalDefinition[] = [
   bot,
   tampering,
@@ -160,6 +233,10 @@ export const SIGNAL_DEFINITIONS: readonly SignalDefinition[] = [
   ipBlocklist,
   velocity,
   incognito,
+  devtools,
+  virtualMachine,
+  privacyBrowser,
+  highActivity,
 ];
 
 export type SignalResults = Record<SignalId, SignalResult>;

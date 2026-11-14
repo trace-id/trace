@@ -141,7 +141,25 @@ export const TEST_SCORING_CONFIG: ScoringConfig = {
     ],
   },
   suspect: {
-    weights: { bot: 60, tampering: 25, tor: 30, datacenterIp: 15, ipBlocklist: 40, velocity: 20, incognito: 5 },
+    weights: {
+      bot: 60,
+      tampering: 25,
+      tor: 30,
+      datacenterIp: 15,
+      ipBlocklist: 40,
+      velocity: 20,
+      incognito: 5,
+      devtools: 5,
+      virtualMachine: 15,
+      privacyBrowser: 5,
+      highActivity: 15,
+    },
   },
-  velocity: { eventsPerVisitor1h: 60, visitorsPerIp1h: 20, ipsPerVisitor24h: 10, visitorsPerLinkedId24h: 5 },
+  velocity: {
+    eventsPerVisitor1h: 60,
+    eventsPerVisitor24h: 500,
+    visitorsPerIp1h: 20,
+    ipsPerVisitor24h: 10,
+    visitorsPerLinkedId24h: 5,
+  },
 };

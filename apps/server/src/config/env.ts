@@ -17,6 +17,10 @@ export const envSchema = z.object({
   TOR_EXIT_LIST_FILE: optionalPath,
   DATACENTER_CIDR_FILE: optionalPath,
   IP_BLOCKLIST_FILE: optionalPath,
+  DATACENTER_ASN_FILE: optionalPath,
+  /** Operator-supplied MaxMind-format databases; never bundled. */
+  GEOIP_COUNTRY_DB: optionalPath,
+  GEOIP_ASN_DB: optionalPath,
   RATE_LIMIT_INGEST_PER_KEY_PER_MIN: perMinute(1200),
   RATE_LIMIT_INGEST_PER_IP_PER_MIN: perMinute(60),
   RATE_LIMIT_INGEST_PER_VISITOR_PER_MIN: perMinute(30),

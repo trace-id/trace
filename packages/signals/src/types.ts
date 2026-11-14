@@ -71,6 +71,13 @@ export interface PrivacyIndicators {
   incognitoLikely: boolean;
   incognitoMethod: string | null;
   storageQuotaMb: number | null;
+  /** navigator.brave present. Optional: added after payload v1 shipped. */
+  braveLikely?: boolean;
+}
+
+export interface DevtoolsIndicators {
+  likely: boolean;
+  method: string | null;
 }
 
 export interface StorageAvailability {
@@ -87,6 +94,8 @@ export interface SignalPayload {
   tamper: TamperIndicators;
   privacy: PrivacyIndicators;
   storage: StorageAvailability;
+  /** Optional: added after payload v1 shipped. */
+  devtools?: DevtoolsIndicators;
   collectMs: number;
 }
 
@@ -101,6 +110,7 @@ export interface IpInfo {
 
 export interface VelocityCounts {
   eventsPerVisitor1h: number | null;
+  eventsPerVisitor24h: number | null;
   visitorsPerIp1h: number | null;
   ipsPerVisitor24h: number | null;
   visitorsPerLinkedId24h: number | null;

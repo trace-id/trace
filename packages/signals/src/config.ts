@@ -8,6 +8,10 @@ export const SIGNAL_IDS = [
   'ipBlocklist',
   'velocity',
   'incognito',
+  'devtools',
+  'virtualMachine',
+  'privacyBrowser',
+  'highActivity',
 ] as const;
 
 export type SignalId = (typeof SIGNAL_IDS)[number];
@@ -24,6 +28,8 @@ export interface IdentificationConfig {
 
 export interface VelocityThresholds {
   eventsPerVisitor1h: number;
+  /** High-activity device: sustained volume over a day rather than a burst. */
+  eventsPerVisitor24h: number;
   visitorsPerIp1h: number;
   ipsPerVisitor24h: number;
   visitorsPerLinkedId24h: number;

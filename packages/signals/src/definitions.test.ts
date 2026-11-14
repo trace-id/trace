@@ -71,7 +71,13 @@ describe('signal definitions', () => {
     it('lists each threshold exceeded', () => {
       const r = evaluateSignals(
         makeContext({
-          velocity: { eventsPerVisitor1h: 61, visitorsPerIp1h: 20, ipsPerVisitor24h: 11, visitorsPerLinkedId24h: null },
+          velocity: {
+            eventsPerVisitor1h: 61,
+            eventsPerVisitor24h: 61,
+            visitorsPerIp1h: 20,
+            ipsPerVisitor24h: 11,
+            visitorsPerLinkedId24h: null,
+          },
         }),
         cfg,
       ).velocity;
