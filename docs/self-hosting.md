@@ -1,6 +1,6 @@
 # Self-hosting guide
 
-The [quickstart](/quickstart) gets a local stack running. This page covers what changes for a real deployment.
+The [quickstart](../README.md#quick-start) gets a local stack running. This page covers what changes for a real deployment.
 
 ## Components
 
@@ -28,6 +28,8 @@ Then set:
 | `API_URL` (dashboard) | The server's internal address, e.g. `http://server:8080` |
 | `TRUST_PROXY` (server) | The proxy's IP or CIDR, e.g. `10.0.0.0/8`. Without it every request appears to come from the proxy, so IP signals and per-IP limits break. Never `true` unless the proxy strips client-sent `X-Forwarded-For`. Hop counts are refused. |
 
+If the proxy can compute JA4 TLS fingerprints, pass them in a header it always overwrites and set `TLS_FINGERPRINT_HEADER` (see the [signal catalog](signals.md#tls-fingerprints)). For first-party mode, route a path of your main site to the server instead of (or as well as) a separate host; see [integration](integration.md#first-party-mode).
+
 Expose only the reverse proxy. Postgres and Redis must not be reachable from the internet, and in the provided Compose file they are not published.
 
 ## Secrets
@@ -40,13 +42,29 @@ Without `REDIS_URL` the server runs, but rate limits and velocity-based signals 
 
 ## IP data
 
-Nothing is bundled. Mount files into the server container and point the variables at them; they are read at startup, so restart after updating them.
+Nothing is bundled, and nothing is fetched unless you ask. Two ways to give Trace IP data, which combine:
 
-- `TOR_EXIT_LIST_FILE`, `DATACENTER_CIDR_FILE`, `IP_BLOCKLIST_FILE`: one IP or CIDR per line.
-- `GEOIP_COUNTRY_DB`, `GEOIP_ASN_DB`: MaxMind-format `.mmdb` files you obtained under their own license.
-- `DATACENTER_ASN_FILE`: one ASN per line; needs `GEOIP_ASN_DB`.
+**Free files, refreshed daily.** One command downloads them and prints the settings:
 
-See the [signal catalog](/signals#ip-intelligence) for sources. Refresh lists on a schedule (daily for Tor).
+```sh
+npm run ip-data -w trace-server -- /data/ip            # or --city for location, --x4b-vpn for a community VPN list
+```
+
+| File | Source | Setting |
+| --- | --- | --- |
+| `tor-exits.txt` | The Tor Project's relay list (Onionoo) | `TOR_EXIT_LIST_FILE` |
+| `datacenter.txt` | Ranges AWS, Google Cloud, Oracle Cloud, DigitalOcean and Linode publish | `DATACENTER_CIDR_FILE` |
+| `icloud-relay.txt` | Apple's iCloud Private Relay egress ranges | `RELAY_CIDR_FILE` |
+| `dbip-country.mmdb` (or `dbip-city.mmdb`) | DB-IP Lite, CC BY 4.0: credit "IP data by DB-IP" where you show location | `GEOIP_COUNTRY_DB` |
+| `dbip-asn.mmdb` | DB-IP Lite ASN | `GEOIP_ASN_DB` |
+| `GeoLite2-*.mmdb` | MaxMind GeoLite2, when `MAXMIND_ACCOUNT_ID` and `MAXMIND_LICENSE_KEY` are set (free account) | `GEOIP_COUNTRY_DB`, `GEOIP_ASN_DB` |
+| `vpn.txt` | X4BNet's community VPN list, only with `--x4b-vpn`; it states no license, so check before commercial use | `VPN_CIDR_FILE` |
+
+Run it from cron (for example daily at 04:00). Files are replaced atomically, a source that fails keeps its previous file, and the server reloads changed files within 10 minutes without a restart. Your own lists (`IP_BLOCKLIST_FILE`, `PROXY_CIDR_FILE`, `VPN_ASN_FILE`, `DATACENTER_ASN_FILE`) work the same way.
+
+**IP data providers.** For commercial VPN and residential proxy detection, which free lists cannot match, add a provider: `IP_PROVIDERS=ipqualityscore` with `IPQS_KEY=...`, or any of the thirteen in [Configuration: IP data providers](configuration.md#ip-data-providers). Lookups run within a 400 ms budget and are cached for a day per IP; a provider outage never fails an identification. Each provider receives visitor IP addresses, so it needs a data processing agreement and a line in your privacy policy.
+
+See the [signal catalog](signals.md#ip-intelligence) for what each signal uses.
 
 ## Backups
 
