@@ -4,8 +4,8 @@ Open-source, self-hostable device identification and fraud signals. A page embed
 
 - Recognises returning devices through private windows, cleared storage and browser updates
 - Links browsers on one device; finds many accounts on one device and one account on many devices
-- 20+ signals with reasons: bots, anti-detect browsers, automated input, VPNs, Tor, TLS mismatches, velocity
-- SDKs for the browser (JS, React, Vue, Svelte), React Native and Expo apps, and the server (Node, Python, PHP, Java), an MCP server for AI assistants, OpenAPI
+- 26 signals with reasons: bots, anti-detect browsers, automated input, VPNs, Tor, TLS mismatches, velocity
+- SDKs for the browser (JS, React, Next.js, Vue, Nuxt, Svelte, Angular, Solid), mobile apps (React Native and Expo, Flutter, Kotlin, Swift) and servers (Node, Python, PHP, Java, Go, Ruby, .NET), an MCP server for AI assistants, OpenAPI. [Integration](docs/integration.md) says how well each one is tested
 - Runs on your infrastructure: as its own service, or embedded in the backend you already have ([`@trace-id/embed`](docs/embedded.md))
 
 **Status: pre-release.** Not yet validated on real traffic; do not use it to block users yet.
@@ -15,9 +15,11 @@ Open-source, self-hostable device identification and fraud signals. A page embed
 You need Docker.
 
 ```sh
-git clone <repository-url> trace && cd trace
+git clone https://github.com/trace-id/trace.git && cd trace
 ./setup.sh                 # Windows PowerShell: .\setup.ps1
 ```
+
+Prebuilt images (linux/amd64 and linux/arm64) are published as `ghcr.io/trace-id/trace-server` and `ghcr.io/trace-id/trace-dashboard`; the script below builds from source instead.
 
 The script creates `docker/.env` with random secrets on the first run, starts Postgres, Redis, the server (`http://localhost:8080`) and the dashboard (`http://localhost:3000`), and waits until they are ready. In the dashboard, create the first account (it becomes the admin), a project, a public key with your page's origin, and a secret key.
 
@@ -125,7 +127,7 @@ API_URL=http://localhost:8080 npm run dev -w trace-dashboard   # http://localhos
 
 npm run lint && npm run typecheck && npm test
 npm run accuracy          # fails if precision or recall drop below the baseline
-node sdks/run-tests.mjs   # Python, PHP and Java SDKs
+node sdks/run-tests.mjs   # every server SDK whose toolchain is installed
 ```
 
 ## Licensing
