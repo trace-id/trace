@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { TEST_SCORING_CONFIG } from '@tbdname/signals/testing';
+import { TEST_SCORING_CONFIG } from '@trace-id/signals/testing';
 import { describe, expect, it } from 'vitest';
 import { FIXTURE_DIR } from './fixtures.js';
 import { type Fixture, runFixture } from './harness.js';
@@ -23,7 +23,11 @@ describe('accuracy harness', () => {
   });
 
   it('scores a perfect split and a total merge correctly', async () => {
-    const comps = { canvas: 'c', webgl: 'w', audio: 'a', fonts: 'f', screen: 's', hardware: 'h', timezone: 't', platform: 'p' };
+    // The 14 components every SDK version reports, enough overlap (minSharedWeightRatio) to be compared at all.
+    const comps = {
+      canvas: 'c', webgl: 'w', webglParams: 'wp', audio: 'a', fonts: 'f', screen: 's', hardware: 'h', timezone: 't',
+      languages: 'l', platform: 'p', math: 'm', css: 'cs', media: 'md', userAgentFamily: 'u',
+    };
     const fixture: Fixture = {
       name: 'merge',
       description: '',

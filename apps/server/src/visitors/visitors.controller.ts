@@ -1,5 +1,5 @@
 import { Controller, Delete, Get, HttpCode, Inject, Param, Query, Req } from '@nestjs/common';
-import { type VisitorHistoryResponse } from '@tbdname/signals/api';
+import { type VisitorHistoryResponse } from '@trace-id/signals/api';
 import { type FastifyRequest } from 'fastify';
 import { Auth, requireAuth } from '../common/auth.js';
 import { ENV, type Env } from '../config/env.js';

@@ -1,10 +1,10 @@
-import { makePayload } from '@tbdname/signals/testing';
+import { makePayload } from '@trace-id/signals/testing';
 import { describe, expect, it } from 'vitest';
 import { parseIdentifyRequest } from './identify.schema.js';
 
 const valid = () => ({
   signals: { ...makePayload(), components: { canvas: 'a'.repeat(28), timezone: 'b'.repeat(28) } },
-  sdk: { name: '@tbdname/sdk-js', version: '0.1.0' },
+  sdk: { name: '@trace-id/sdk-js', version: '0.1.0' },
 });
 
 describe('identify request schema', () => {

@@ -1,4 +1,5 @@
-import { type Components } from '@tbdname/signals/types';
+import { type FrequencyTable } from '@trace-id/signals/linkage';
+import { type ComponentName, type Components } from '@trace-id/signals/types';
 import { type PrismaService } from '../infra/prisma.service.js';
 import { type CandidateSource, type VisitorSnapshot } from './engine.js';
 
@@ -29,6 +30,23 @@ export class PrismaCandidateSource implements CandidateSource {
       select: { id: true, signalSummary: true, lastSeenAt: true },
     });
     return visitors.map(toSnapshot);
+  }
+
+  /** One query: the counts for this payload's values plus the project total. */
+  async frequencies(components: Components): Promise<FrequencyTable> {
+    const pairs = Object.entries(components).filter((e): e is [string, string] => typeof e[1] === 'string');
+    const rows = await this.prisma.componentStat.findMany({
+      where: {
+        projectId: this.projectId,
+        OR: [{ component: '_total', value: '_' }, ...pairs.map(([component, value]) => ({ component, value }))],
+      },
+      select: { component: true, value: true, visitors: true },
+    });
+    const counts = new Map(rows.map((r) => [`${r.component}:${r.value}`, r.visitors]));
+    return {
+      total: counts.get('_total:_') ?? 0,
+      count: (component: ComponentName, value: string) => counts.get(`${component}:${value}`) ?? 0,
+    };
   }
 
   async byId(visitorId: string): Promise<VisitorSnapshot | null> {

@@ -5,7 +5,7 @@ import { AUTH, type Auth as BetterAuth, toHeaders } from '../auth/auth.js';
 import { ENV, type Env } from '../config/env.js';
 import { PrismaService } from '../infra/prisma.service.js';
 import { KeyService, type ResolvedKey } from '../keys/key.service.js';
-import { originAllowed } from '../keys/origins.js';
+import { appAllowed, originAllowed } from '../keys/origins.js';
 import { ApiError } from './api-error.js';
 
 export type AuthKind = 'public' | 'secret' | 'session' | 'none';
@@ -91,7 +91,10 @@ export class AuthGuard implements CanActivate {
     const resolved = key ? await this.keys.resolve(key, 'public') : null;
     if (!resolved) throw ApiError.unauthorized();
     const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
-    if (!originAllowed(origin, resolved.allowedOrigins)) {
+    // Native apps (React Native SDK) send no Origin; they name their app id instead, listed on the key as app:<id>.
+    const appId = typeof req.headers['x-trace-app'] === 'string' ? req.headers['x-trace-app'] : undefined;
+    const allowed = origin === undefined ? appAllowed(appId, resolved.allowedOrigins) : originAllowed(origin, resolved.allowedOrigins);
+    if (!allowed) {
       throw ApiError.forbidden('origin_not_allowed', 'Origin is not allowed for this key');
     }
     req.auth = resolved;

@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleD
 import { type Prisma } from '@prisma/client';
 import { describeError } from '../common/log-safe.js';
 import { ENV, type Env } from '../config/env.js';
+import { FraudService } from '../fraud/fraud.service.js';
 import { PrismaService } from './prisma.service.js';
 
 const MONTHS_AHEAD = 2;
@@ -19,6 +20,12 @@ export interface RetentionResult {
   partitionsDropped: number;
 }
 
+/** Postgres 23503: Prisma reports raw-query failures as P2010 with the database code in meta.code. */
+function isForeignKeyViolation(err: unknown): boolean {
+  const e = err as { meta?: { code?: unknown }; message?: unknown } | null;
+  return e?.meta?.code === '23503' || (typeof e?.message === 'string' && e.message.includes('23503'));
+}
+
 /**
  * Partition upkeep and retention. Runs at startup and every MAINTENANCE_INTERVAL_MINUTES.
  * A lease row makes sure only one instance works at a time, without a long transaction.
@@ -33,6 +40,7 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
   constructor(
     @Inject(ENV) private readonly env: Env,
     private readonly prisma: PrismaService,
+    private readonly fraud: FraudService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -55,6 +63,12 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       this.logger.log(
         `retention: events=${r.eventsDeleted} deliveries=${r.deliveriesDeleted} visitors=${r.visitorsDeleted} partitions=${r.partitionsDropped}`,
       );
+      const stats = await this.refreshComponentStats();
+      this.logger.log(`component stats: projects=${stats.projects} rows=${stats.rows}`);
+      const nonces = await this.prisma.requestNonce.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 24 * 3_600_000) } } });
+      this.logger.log(`request nonces purged: ${nonces.count}`);
+      const fraud = await this.fraud.trainStale();
+      this.logger.log(`fraud models: trained=${fraud.trained}`);
     } catch (err) {
       this.logger.error(`maintenance failed: ${describeError(err)}`);
     }
@@ -97,6 +111,40 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
     return claimed === 1;
   }
 
+  /**
+   * Rebuilds the value frequencies the linkage matcher uses, one project per transaction, from each visitor's latest
+   * components. Public so tests and operators can run it on demand.
+   */
+  async refreshComponentStats(): Promise<{ projects: number; rows: number }> {
+    const projects = await this.prisma.project.findMany({ select: { id: true } });
+    let rows = 0;
+    for (const { id } of projects) {
+      let counts: number[];
+      try {
+        counts = await this.prisma.$transaction([
+          this.prisma.$executeRaw`SET LOCAL statement_timeout = '120s'`,
+          this.prisma.$executeRaw`DELETE FROM "component_stats" WHERE "projectId" = ${id}::uuid`,
+          this.prisma.$executeRaw`
+            INSERT INTO "component_stats" ("projectId", "component", "value", "visitors")
+            SELECT ${id}::uuid, e.key, e.value, count(*)::int
+            FROM "visitors" v, jsonb_each_text(v."signalSummary") e
+            WHERE v."projectId" = ${id}::uuid AND length(e.key) <= 24 AND length(e.value) <= 64
+            GROUP BY e.key, e.value
+            HAVING count(*) >= 2`,
+          this.prisma.$executeRaw`
+            INSERT INTO "component_stats" ("projectId", "component", "value", "visitors")
+            SELECT ${id}::uuid, '_total', '_', count(*)::int FROM "visitors" WHERE "projectId" = ${id}::uuid`,
+        ]);
+      } catch (err) {
+        // The project was deleted while the job ran (foreign key violation): nothing to keep for it.
+        if (isForeignKeyViolation(err)) continue;
+        throw err;
+      }
+      rows += (counts[2] ?? 0) + (counts[3] ?? 0);
+    }
+    return { projects: projects.length, rows };
+  }
+
   /** Public so tests and operators can run it on demand. */
   async applyRetention(now: Date = new Date()): Promise<RetentionResult> {
     const maxDays = this.env.RETENTION_MAX_DAYS;
@@ -127,6 +175,15 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
         visitorsDeleted += n;
         if (n < DELETE_BATCH) break;
       }
+      // Rows of visitors that are still active but for networks or accounts not seen within retention.
+      await this.slow(
+        () => this.prisma.$executeRaw`
+          DELETE FROM "device_profiles" WHERE "projectId" = ${project.id}::uuid AND "lastSeenAt" < ${cutoff}`,
+      );
+      await this.slow(
+        () => this.prisma.$executeRaw`
+          DELETE FROM "visitor_accounts" WHERE "projectId" = ${project.id}::uuid AND "lastSeenAt" < ${cutoff}`,
+      );
     }
 
     const deliveryCutoff = new Date(now.getTime() - DELIVERY_RETENTION_DAYS * DAY_MS);

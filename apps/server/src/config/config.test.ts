@@ -1,4 +1,4 @@
-import { TEST_SCORING_CONFIG } from '@tbdname/signals/testing';
+import { TEST_SCORING_CONFIG } from '@trace-id/signals/testing';
 import { describe, expect, it } from 'vitest';
 import { parseEnv, parseTrustProxy } from './env.js';
 import { loadScoringConfig, parseScoringConfig } from './scoring.js';
@@ -17,6 +17,14 @@ describe('scoring config', () => {
     expect(bad((c) => ((c.identification as Record<string, unknown>).buckets = [['nope']]))).toThrow(/buckets/);
     expect(bad((c) => (c.extra = 1))).toThrow();
     expect(bad((c) => ((c.identification as Record<string, unknown>).matchThreshold = 2))).toThrow(/matchThreshold/);
+    expect(bad((c) => (((c.crossBrowser as Record<string, unknown>).weights as Record<string, unknown>).nope = 1))).toThrow();
+  });
+
+  it('loads override files written before cross-browser linking, with its defaults', () => {
+    const old = structuredClone(TEST_SCORING_CONFIG) as unknown as Record<string, unknown>;
+    delete old.crossBrowser;
+    delete ((old.suspect as Record<string, unknown>).weights as Record<string, unknown>).crossBrowser;
+    expect(parseScoringConfig(old)).toEqual(TEST_SCORING_CONFIG);
   });
 });
 

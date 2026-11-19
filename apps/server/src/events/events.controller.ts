@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Param, Req } from '@nestjs/common';
-import { type EventResponse } from '@tbdname/signals/api';
+import { type EventResponse } from '@trace-id/signals/api';
 import { type FastifyRequest } from 'fastify';
 import { ApiError } from '../common/api-error.js';
 import { Auth, requireAuth } from '../common/auth.js';

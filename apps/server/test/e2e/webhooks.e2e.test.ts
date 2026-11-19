@@ -2,9 +2,10 @@ import { createServer, type Server } from 'node:http';
 import { type AddressInfo } from 'node:net';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type PrismaClient } from '@prisma/client';
-import { verifyWebhook } from '@tbdname/sdk-node/webhooks';
-import { type IdentifyResponse, type WebhookEndpointResponse } from '@tbdname/signals/api';
-import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/signals/testing';
+import { verifyWebhook } from '@trace-id/sdk-node/webhooks';
+import { type IdentifyResponse, type WebhookEndpointResponse } from '@trace-id/signals/api';
+import { TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@trace-id/signals/testing';
+import { makePayload } from '../payload.js';
 import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
@@ -32,6 +33,19 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
   let received: Received[] = [];
   let receiverStatus = 200;
   const projects: { id: string; pub: string; sec: string }[] = [];
+
+  /**
+   * Runs the worker until `count` requests reached the receiver (or 5 s pass). A delivery is due at the identify call's
+   * JS time, and the database clock it is compared with can lag by a timer tick on some systems, so the first run right
+   * after identify may find nothing due yet.
+   */
+  async function deliverUntil(count: number): Promise<void> {
+    const worker = app.get(WebhookWorkerService);
+    const deadline = Date.now() + 5000;
+    while (received.length < count && Date.now() < deadline) {
+      if ((await worker.processDue()) === 0) await new Promise((r) => setTimeout(r, 25));
+    }
+  }
 
   beforeAll(async () => {
     receiver = createServer((req, res) => {
@@ -118,7 +132,7 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
 
     const clean = (await identify(a.pub)).json<IdentifyResponse>();
     const flagged = (await identify(a.pub, true)).json<IdentifyResponse>();
-    await app.get(WebhookWorkerService).processDue();
+    await deliverUntil(3);
 
     const payloads = received.map((r) =>
       verifyWebhook({ body: r.body, signature: r.headers['x-signature'] as string, secret: endpoint.secret ?? '' }),
@@ -139,7 +153,7 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
     receiverStatus = 503;
     await identify(a.pub);
     const worker = app.get(WebhookWorkerService);
-    await worker.processDue();
+    await deliverUntil(1);
     expect(received).toHaveLength(1);
     const delivery = await prisma.webhookDelivery.findFirstOrThrow({ where: { endpointId: endpoint.id } });
     expect(delivery).toMatchObject({ status: 'pending', attempts: 1, lastStatus: 503 });
@@ -148,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('webhooks (Postgres)', () => {
     await worker.processDue();
     expect(received).toHaveLength(1);
 
-    await prisma.webhookDelivery.update({ where: { id: delivery.id }, data: { nextAttemptAt: new Date() } });
+    await prisma.webhookDelivery.update({ where: { id: delivery.id }, data: { nextAttemptAt: new Date(Date.now() - 1000) } });
     receiverStatus = 200;
     await worker.processDue();
     expect(received).toHaveLength(2);

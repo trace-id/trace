@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateKey, hashesEqual, hashKey, parseKey } from './key-crypto.js';
-import { isValidOriginPattern, originAllowed } from './origins.js';
+import { appAllowed, isValidOriginPattern, originAllowed } from './origins.js';
 
 describe('key crypto', () => {
   it('generates distinct, well-formed keys with a stable prefix and hash', () => {
@@ -59,5 +59,20 @@ describe('origins', () => {
     expect(isValidOriginPattern('https://app.example.com/')).toBe(false);
     expect(isValidOriginPattern('*')).toBe(false);
     expect(isValidOriginPattern('https://*')).toBe(false);
+  });
+});
+
+describe('native app entries', () => {
+  it('accepts app:<id> patterns and matches the listed app only', () => {
+    expect(isValidOriginPattern('app:com.example.shop')).toBe(true);
+    expect(isValidOriginPattern('app:')).toBe(false);
+    expect(isValidOriginPattern('app:bad id')).toBe(false);
+    const allowed = ['https://shop.example.com', 'app:com.example.shop'];
+    expect(appAllowed('com.example.shop', allowed)).toBe(true);
+    expect(appAllowed('com.other.app', allowed)).toBe(false);
+    expect(appAllowed(undefined, allowed)).toBe(false);
+    expect(appAllowed('com.example.shop', ['https://shop.example.com'])).toBe(false);
+    // An app entry never matches a web origin.
+    expect(originAllowed('app:com.example.shop', allowed)).toBe(false);
   });
 });

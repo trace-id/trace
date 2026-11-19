@@ -4,7 +4,7 @@ import { createPrismaClient } from '../infra/prisma-client.js';
 import { generateKey } from '../keys/key-crypto.js';
 import { isValidOriginPattern } from '../keys/origins.js';
 
-const USAGE = `Usage: npm run keys:create -w tbdname-server -- --project <name> --origins <origin[,origin...]> [--project-id <uuid>]
+const USAGE = `Usage: npm run keys:create -w trace-server -- --project <name> --origins <origin[,origin...]> [--project-id <uuid>]
 
 Creates a project (unless --project-id is given) with one public and one secret key.
 Keys are printed once and stored only as SHA-256 hashes.`;

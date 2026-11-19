@@ -23,6 +23,24 @@ export const envSchema = z.object({
   /** Operator-supplied MaxMind-format databases; never bundled. */
   GEOIP_COUNTRY_DB: optionalPath,
   GEOIP_ASN_DB: optionalPath,
+  /** Privacy relay egress ranges (Apple publishes iCloud Private Relay's as CSV; first column is read). */
+  RELAY_CIDR_FILE: optionalPath,
+  /** Commercial VPN exit ranges, one IP or CIDR per line. */
+  VPN_CIDR_FILE: optionalPath,
+  /** VPN provider ASNs, one per line (needs GEOIP_ASN_DB). */
+  VPN_ASN_FILE: optionalPath,
+  /** Residential and datacenter proxy exit ranges, one IP or CIDR per line: the proxy signal. */
+  PROXY_CIDR_FILE: optionalPath,
+  CRAWLER_RANGES_FILE: optionalPath,
+  /** Budget for IP provider lookups (IP_PROVIDERS) per identify, in ms; past it they read as "not checked". */
+  IP_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(50).max(5000).default(400),
+  /** How long a provider's answer for an IP is reused. 0 turns caching off. */
+  IP_PROVIDER_CACHE_HOURS: z.coerce.number().min(0).max(720).default(24),
+  /** Base64 of 32 random bytes. When set, identify responses carry sealedResult: the full event, AES-256-GCM encrypted. */
+  SEALED_RESULTS_KEY: z
+    .string()
+    .refine((v) => Buffer.from(v, 'base64').length === 32, 'SEALED_RESULTS_KEY must be base64 of exactly 32 bytes')
+    .optional(),
   RATE_LIMIT_INGEST_PER_KEY_PER_MIN: perMinute(1200),
   RATE_LIMIT_INGEST_PER_IP_PER_MIN: perMinute(60),
   RATE_LIMIT_INGEST_PER_VISITOR_PER_MIN: perMinute(30),
@@ -33,6 +51,31 @@ export const envSchema = z.object({
   WEBHOOK_ALLOW_INSECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   WEBHOOK_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(5000),
   WEBHOOK_POLL_INTERVAL_MS: z.coerce.number().int().min(100).max(60_000).default(1000),
+  /** Link visitors that look like one device in different browsers (see docs/privacy.md). Off when IP_STORAGE=none. */
+  CROSS_BROWSER_LINKING: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+  /**
+   * First-party mode: identify responses also set the visitor token as an HttpOnly, SameSite=Lax cookie. Browsers only
+   * keep it when the SDK runs with firstPartyCookie: true and this server is same-site with the page (a path or
+   * subdomain of the customer's site; see docs/integration.md). Never a third-party cookie.
+   */
+  VISITOR_COOKIE: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+  VISITOR_COOKIE_NAME: z.string().regex(/^[\w-]{1,64}$/).default('_trace_vt'),
+  /** Optional Domain attribute, e.g. example.com to share the cookie across subdomains. */
+  VISITOR_COOKIE_DOMAIN: z.string().regex(/^[a-z0-9.-]{1,253}$/i).optional(),
+  /** Cookie Path. Behind a path proxy (www.example.com/trace -> this server) set it to /trace/v1/identify. */
+  VISITOR_COOKIE_PATH: z.string().regex(/^\/[\w./-]{0,200}$/).default('/v1/identify'),
+  /**
+   * Header with the JA4 TLS fingerprint, set by a proxy you control that terminates TLS (and strips the header from
+   * client requests). Unset: TLS signals are off.
+   */
+  TLS_FINGERPRINT_HEADER: z.string().regex(/^[a-z0-9-]{1,64}$/).optional(),
+  /**
+   * Web Bot Auth key directories to trust for signed AI agents, comma separated origins. Default https://chatgpt.com;
+   * "*" trusts any https origin (Trace then fetches whatever directory a request names); "off" disables the check.
+   */
+  AGENT_DIRECTORIES: z.string().default('https://chatgpt.com'),
+  /** One JA4 per line, '#' comments allowed: known bot and scraper clients. */
+  JA4_BLOCKLIST_FILE: optionalPath,
   /** Signs dashboard sessions. At least 32 random characters, different from TOKEN_SECRET. */
   AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
   /** Public origin of the dashboard; it proxies /api/auth and /v1 to this server. */

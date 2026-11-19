@@ -58,7 +58,7 @@ export function sendWebhook(opts: SendOptions): Promise<SendResult> {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(opts.body),
-          'User-Agent': 'tbdname-webhooks/1',
+          'User-Agent': 'trace-webhooks/1',
           'X-Webhook-Id': opts.deliveryId,
           'X-Webhook-Timestamp': String(timestamp),
           'X-Signature': signatureHeader(opts.secret, timestamp, opts.body),

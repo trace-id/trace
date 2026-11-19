@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Inject, Patch, Post, Req } from '@nestjs/common';
-import { type MeResponse, type ProjectResponse } from '@tbdname/signals/api';
+import { type MeResponse, type ProjectResponse } from '@trace-id/signals/api';
 import { type FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { ApiError } from '../common/api-error.js';

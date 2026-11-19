@@ -11,7 +11,7 @@ const FILES = new Set(['sdk.esm.js', 'sdk.global.js', 'sdk.esm.js.map', 'sdk.glo
 function loadBundles(): Map<string, Buffer> {
   const out = new Map<string, Buffer>();
   try {
-    const dir = dirname(createRequire(import.meta.url).resolve('@tbdname/sdk-js/browser'));
+    const dir = dirname(createRequire(import.meta.url).resolve('@trace-id/sdk-js/browser'));
     for (const name of FILES) out.set(name, readFileSync(join(dir, name)));
   } catch {
     // Not built: the route answers 404 instead of failing startup.

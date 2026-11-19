@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
-import { type WebhookPayload, type WebhookType } from '@tbdname/signals/api';
+import { type WebhookPayload, type WebhookType } from '@trace-id/signals/api';
 import { describeError } from '../common/log-safe.js';
 import { ENV, type Env } from '../config/env.js';
 import { PrismaService } from '../infra/prisma.service.js';

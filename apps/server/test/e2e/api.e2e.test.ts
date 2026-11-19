@@ -1,7 +1,8 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type PrismaClient } from '@prisma/client';
-import { type EventResponse, type IdentifyResponse } from '@tbdname/signals/api';
-import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/signals/testing';
+import { type EventResponse, type IdentifyResponse } from '@trace-id/signals/api';
+import { makePayload as handBuiltPayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@trace-id/signals/testing';
+import { makePayload } from '../payload.js';
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
@@ -83,11 +84,11 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
 
   function identify(
     body: unknown,
-    opts: { key?: string; origin?: string | null; ip?: string; contentType?: string; raw?: string } = {},
+    opts: { key?: string; origin?: string | null; ip?: string; contentType?: string; raw?: string; userAgent?: string } = {},
   ): Promise<LightMyRequestResponse> {
     const headers: Record<string, string> = {
       'content-type': opts.contentType ?? 'text/plain',
-      'user-agent': TEST_USER_AGENT,
+      'user-agent': opts.userAgent ?? TEST_USER_AGENT,
     };
     if (opts.origin !== null) headers.origin = opts.origin ?? ORIGIN;
     return http.inject({
@@ -101,7 +102,7 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
 
   const request = (token?: string, components = DEVICE) => ({
     signals: makePayload({ components }),
-    sdk: { name: '@tbdname/sdk-js', version: '0.1.0' },
+    sdk: { name: '@trace-id/sdk-js', version: '0.1.0' },
     ...(token ? { token } : {}),
   });
 
@@ -115,7 +116,7 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     expect(res.headers['access-control-allow-origin']).toBe(ORIGIN);
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     const body = res.json<IdentifyResponse>();
-    expect(Object.keys(body).sort()).toEqual(['confidence', 'eventId', 'suspectScore', 'token', 'visitorId']);
+    expect(Object.keys(body).sort()).toEqual(['confidence', 'deviceId', 'eventId', 'suspectScore', 'token', 'visitorId']);
 
     const ev = await verify(body.eventId);
     expect(ev.statusCode).toBe(200);
@@ -135,7 +136,13 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
   });
 
   it('scores Tor and bot traffic and explains why', async () => {
-    const body = { ...request(), signals: makePayload({ components: DEVICE, bot: { webdriver: true } }) };
+    // A device of its own: reusing the shared test device would match an earlier visitor and, through that visitor's
+    // networks, link to the other test visitors (crossBrowser), which is not what this test is about.
+    const own = { ...DEVICE, canvas: hex('70'), audio: hex('71'), fonts: hex('72'), webgl: hex('73') };
+    const body = {
+      ...request(),
+      signals: makePayload({ components: own, attributes: { webglRenderer: 'Tor test GPU 9000' }, bot: { webdriver: true } }),
+    };
     const res = (await identify(body, { ip: TOR_IP })).json<IdentifyResponse>();
     const event = (await verify(res.eventId)).json<EventResponse>();
     expect(event.suspectScore).toBe(90);
@@ -143,6 +150,16 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
       { signal: 'bot', contribution: 60 },
       { signal: 'tor', contribution: 30 },
     ]);
+  });
+
+  it('flags a captured request sent again (same nonce)', async () => {
+    const own = { ...DEVICE, canvas: hex('80'), audio: hex('81'), fonts: hex('82'), webgl: hex('83') };
+    const body = { ...request(undefined, own), nonce: 'cd'.repeat(16), sentAt: Date.now() };
+    const first = (await verify((await identify(body)).json<IdentifyResponse>().eventId)).json<EventResponse>();
+    const replay = (await verify((await identify(body)).json<IdentifyResponse>().eventId)).json<EventResponse>();
+    expect(first.signals.replayedRequest).toMatchObject({ detected: false, details: { available: true } });
+    expect(replay.signals.replayedRequest.detected).toBe(true);
+    expect(replay.reasons).toContainEqual({ signal: 'replayedRequest', contribution: 50 });
   });
 
   it('rejects disallowed or missing origins, bad keys and secret keys on ingest', async () => {
@@ -210,7 +227,8 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
       }),
       devtools: { likely: true, method: 'widthGap' },
     };
-    const res = await identify({ ...request(), signals });
+    // Own network: otherwise it links to the identical test device used by earlier tests.
+    const res = await identify({ ...request(), signals }, { ip: '198.18.3.1' });
     expect(res.statusCode).toBe(200);
     const event = (await verify(res.json<IdentifyResponse>().eventId)).json<EventResponse>();
     expect(event.reasons.map((r) => r.signal).sort()).toEqual(['devtools', 'privacyBrowser', 'virtualMachine']);
@@ -219,6 +237,60 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     const legacy = request();
     expect('devtools' in legacy.signals).toBe(false);
     expect((await identify(legacy)).statusCode).toBe(200);
+  });
+
+  it('links the same device across browsers on the same network, never across networks', async () => {
+    const chromeUa =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+    const firefoxUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0';
+    const machine = {
+      platform: 'Win32',
+      screenWidth: 2560,
+      screenHeight: 1440,
+      colorDepth: 24,
+      hardwareConcurrency: 12,
+      maxTouchPoints: 0,
+      timezone: 'Europe/Berlin',
+      languages: ['de-DE', 'de'],
+    };
+    const browser = (ua: string, renderer: string, engine: string) => ({
+      signals: {
+        // Components chosen by hand per browser engine (the point of this test), so not re-derived from attributes.
+        ...handBuiltPayload({
+          components: { ...DEVICE, canvas: hex(engine), webgl: hex(`${engine}1`), audio: hex(`${engine}2`), fonts: hex('ff') },
+          attributes: { ...machine, userAgent: ua, webglRenderer: renderer },
+        }),
+        device: { voices: hex('aa'), displayPrefs: hex('bb') },
+      },
+      sdk: { name: '@trace-id/sdk-js', version: '0.1.0' },
+    });
+    const chrome = browser(chromeUa, 'ANGLE (AMD, AMD Radeon RX 6700 XT (0x000073DF) Direct3D11 vs_5_0 ps_5_0, D3D11)', 'e7');
+    const firefox = browser(firefoxUa, 'ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0), or similar', 'e8');
+
+    const first = (await identify(chrome, { ip: '203.0.113.7', userAgent: chromeUa })).json<IdentifyResponse>();
+    const second = (await identify(firefox, { ip: '203.0.113.99', userAgent: firefoxUa })).json<IdentifyResponse>();
+    expect(second.visitorId).not.toBe(first.visitorId);
+    expect(first.deviceId).toBe(first.visitorId);
+    expect(second.deviceId).toBe(first.visitorId);
+    const event = (await verify(second.eventId)).json<EventResponse>();
+    expect(event.linkedVisitors).toHaveLength(1);
+    expect(event.linkedVisitors[0]).toMatchObject({ visitorId: first.visitorId, browser: 'chrome', sameNetwork: true });
+    expect(event.linkedVisitors[0]!.confidence).toBeGreaterThanOrEqual(0.8);
+    expect(event.signals.crossBrowser).toMatchObject({ detected: true, details: { linkedVisitors: 1, browsers: ['chrome'] } });
+    expect(event.reasons.map((r) => r.signal)).toContain('crossBrowser');
+    expect(event.signals.bot.detected).toBe(false);
+
+    // Same hardware on another network: not linked by default.
+    const elsewhere = browser(firefoxUa, 'ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0), or similar', 'e9');
+    const third = (await identify(elsewhere, { ip: '192.0.2.200', userAgent: firefoxUa })).json<IdentifyResponse>();
+    const thirdEvent = (await verify(third.eventId)).json<EventResponse>();
+    expect(thirdEvent.linkedVisitors).toEqual([]);
+    expect(thirdEvent.deviceId).toBe(third.visitorId);
+    expect(event.deviceId).toBe(first.visitorId);
+
+    // The first browser keeps the shared id when it comes back.
+    const again = (await identify({ ...chrome, token: first.token }, { ip: '203.0.113.8', userAgent: chromeUa })).json<IdentifyResponse>();
+    expect(again).toMatchObject({ visitorId: first.visitorId, deviceId: first.visitorId });
   });
 
   it('stores instants correctly whatever the database TimeZone is', async () => {

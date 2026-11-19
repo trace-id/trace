@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:cr
 import { randomBase62 } from '../common/ids.js';
 
 function key(tokenSecret: string): Buffer {
-  return Buffer.from(hkdfSync('sha256', tokenSecret, 'tbdname', 'webhook-secret-v1', 32));
+  return Buffer.from(hkdfSync('sha256', tokenSecret, 'trace', 'webhook-secret-v1', 32));
 }
 
 export function newWebhookSecret(): string {

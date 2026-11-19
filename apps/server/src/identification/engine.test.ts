@@ -1,9 +1,11 @@
-import { TEST_SCORING_CONFIG, makePayload } from '@tbdname/signals/testing';
-import { type Components } from '@tbdname/signals/types';
+import { TEST_SCORING_CONFIG, makePayload } from '@trace-id/signals/testing';
+import { type Components } from '@trace-id/signals/types';
 import { describe, expect, it } from 'vitest';
 import { bucketHashes, type CandidateSource, matchVisitor, type VisitorSnapshot } from './engine.js';
 
-const cfg = TEST_SCORING_CONFIG.identification;
+// The original weighted matcher; the linkage matcher has its own block below.
+const cfg = { ...TEST_SCORING_CONFIG.identification, method: 'weighted' as const };
+const lcfg = TEST_SCORING_CONFIG.identification;
 const BASE = makePayload().components;
 
 function source(visitors: VisitorSnapshot[]): CandidateSource & { bucketCalls: number } {
@@ -99,5 +101,38 @@ describe('matchVisitor', () => {
     const d = await matchVisitor({ components: { math: 'm1' }, tokenVisitorId: null }, s, cfg);
     expect(d.kind).toBe('new');
     expect(s.bucketCalls).toBe(0);
+  });
+});
+
+describe('matchVisitor with linkage', () => {
+  it('matches an identical device and reports the weighted similarity alongside the probability', async () => {
+    const d = await matchVisitor({ components: BASE, tokenVisitorId: null }, source([visitor('v1', BASE)]), lcfg);
+    expect(d).toMatchObject({ kind: 'similar', visitorId: 'v1', similarity: 1 });
+    expect(d.confidence).toBeGreaterThan(0.97);
+  });
+
+  it('matches across a major browser update the weighted matcher misses', async () => {
+    const updated = { ...BASE, css: 'css2', media: 'md2', webglParams: 'wp2' };
+    const weighted = await matchVisitor({ components: updated, tokenVisitorId: null }, source([visitor('v1', BASE)]), cfg);
+    const linked = await matchVisitor({ components: updated, tokenVisitorId: null }, source([visitor('v1', BASE)]), lcfg);
+    expect(weighted.kind).toBe('new');
+    expect(linked).toMatchObject({ kind: 'similar', visitorId: 'v1' });
+  });
+
+  it('keeps apart a device with the same GPU but different hardware, screen, time zone and languages', async () => {
+    const stranger = { ...BASE, hardware: 'h2', screen: 's2', timezone: 'tz2', languages: 'l2' };
+    const d = await matchVisitor({ components: stranger, tokenVisitorId: null }, source([visitor('v1', BASE)]), lcfg);
+    expect(d.kind).toBe('new');
+  });
+
+  it('uses the source frequencies when it has them', async () => {
+    const src = source([visitor('v1', BASE)]);
+    let asked = 0;
+    const withStats = { ...src, frequencies: async () => (asked++, { total: 100_000, count: () => 40_000 }) };
+    const twin = { ...BASE, fonts: 'f2' };
+    const d = await matchVisitor({ components: twin, tokenVisitorId: null }, withStats, lcfg);
+    expect(asked).toBe(1);
+    // Every shared value is common (40% of visitors): agreement on them proves little.
+    expect(d.kind).toBe('new');
   });
 });

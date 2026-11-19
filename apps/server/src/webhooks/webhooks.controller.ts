@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Req } from '@nestjs/common';
-import { type WebhookEndpointResponse } from '@tbdname/signals/api';
+import { type WebhookEndpointResponse } from '@trace-id/signals/api';
 import { type FastifyRequest } from 'fastify';
 import { Auth, requireAuth } from '../common/auth.js';
 import { ENV, type Env } from '../config/env.js';

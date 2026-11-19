@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { type Prisma } from '@prisma/client';
-import { type EventResponse, type WebhookType } from '@tbdname/signals/api';
+import { type EventResponse, type WebhookType } from '@trace-id/signals/api';
 import { PrismaService } from '../infra/prisma.service.js';
 
 interface EndpointSummary {

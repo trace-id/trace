@@ -2,7 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { loadScoringConfig } from '../config/scoring.js';
 import { BASELINE_PATH, loadFixtures } from './fixtures.js';
-import { type AccuracyReport, runFixture } from './harness.js';
+import { componentReport } from './components.js';
+import { type AccuracyReport, type Fixture, runFixture } from './harness.js';
 
 const TOLERANCE = 0.005;
 
@@ -24,9 +25,29 @@ function printReport(r: AccuracyReport): void {
 
 async function main(): Promise<void> {
   const { values } = parseArgs({
-    options: { 'update-baseline': { type: 'boolean' }, json: { type: 'string' }, config: { type: 'string' } },
+    options: {
+      'update-baseline': { type: 'boolean' },
+      json: { type: 'string' },
+      config: { type: 'string' },
+      components: { type: 'boolean' },
+      fixture: { type: 'string' },
+    },
   });
   const config = loadScoringConfig(values.config);
+  if (values.components) {
+    // Per-component diagnostic. Pass --fixture <file.json> (a labelled Fixture exported from your own data) to use real data.
+    const fixtures = values.fixture ? [JSON.parse(readFileSync(values.fixture, 'utf8')) as Fixture] : loadFixtures().slice(-1);
+    for (const fixture of fixtures) {
+      console.log(`
+${fixture.name}${fixture.synthetic ? ' (synthetic: shows only what the generator models)' : ''}`);
+      console.log('  component        coverage  stability  distinct  f1 drop when removed');
+      for (const c of await componentReport(fixture, config.identification)) {
+        const p = (n: number | null): string => (n === null ? '   n/a' : pct(n).padStart(6));
+        console.log(`  ${c.component.padEnd(16)} ${pct(c.coverage).padStart(7)}  ${p(c.stability)}    ${p(c.distinctness)}   ${(c.f1Drop * 100).toFixed(2)} pts`);
+      }
+    }
+    return;
+  }
   const reports: AccuracyReport[] = [];
   for (const fixture of loadFixtures()) reports.push(await runFixture(fixture, config.identification));
   reports.forEach(printReport);

@@ -4,11 +4,11 @@
     "recall": 1
   },
   "synthetic-population-seed1": {
-    "precision": 0.9595,
-    "recall": 0.9
+    "precision": 0.9801,
+    "recall": 0.9574
   },
   "synthetic-population-seed2": {
-    "precision": 0.8894,
-    "recall": 0.892
+    "precision": 0.9446,
+    "recall": 0.9246
   }
 }

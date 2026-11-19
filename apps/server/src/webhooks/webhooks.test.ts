@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { type AddressInfo } from 'node:net';
-import { verifyWebhook } from '@tbdname/sdk-node/webhooks';
+import { verifyWebhook } from '@trace-id/sdk-node/webhooks';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { guardedLookup, isBlockedAddress, validateWebhookUrl } from './net-guard.js';
 import { newWebhookSecret, openSecret, sealSecret } from './secret-box.js';

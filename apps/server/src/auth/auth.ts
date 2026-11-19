@@ -6,7 +6,7 @@ import { type PrismaService } from '../infra/prisma.service.js';
 
 export const AUTH = Symbol('AUTH');
 
-export const CLIENT_IP_HEADER = 'x-tbdname-client-ip';
+export const CLIENT_IP_HEADER = 'x-trace-client-ip';
 
 /** Client-controlled headers that IP-aware libraries might otherwise trust. */
 export const SPOOFABLE_IP_HEADERS = [

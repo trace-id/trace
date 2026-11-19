@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { type AsnResponse, type CountryResponse, Reader } from 'mmdb-lib';
+import { type IpLocation, toLocation } from '@trace-id/signals/geo';
+import { type AsnResponse, type CityResponse, type CountryResponse, Reader } from 'mmdb-lib';
 
 export interface GeoResult {
   country: string | null;
   asn: number | null;
   asnOrg: string | null;
+  /** City-level location; only from a City edition database. Optional: added later. */
+  location?: IpLocation | null;
 }
 
 /** Country and ASN for an IP. Implementations must be synchronous and in-memory. */
@@ -21,14 +24,14 @@ export const NO_GEO: GeoLookup = { lookup: () => ({ country: null, asn: null, as
  */
 export class MmdbGeoLookup implements GeoLookup {
   constructor(
-    private readonly country: Reader<CountryResponse> | null,
+    private readonly country: Reader<CountryResponse & Partial<CityResponse>> | null,
     private readonly asn: Reader<AsnResponse> | null,
   ) {}
 
   static fromFiles(countryDb: string | undefined, asnDb: string | undefined): GeoLookup {
     if (!countryDb && !asnDb) return NO_GEO;
     return new MmdbGeoLookup(
-      countryDb ? new Reader<CountryResponse>(readFileSync(countryDb)) : null,
+      countryDb ? new Reader<CountryResponse & Partial<CityResponse>>(readFileSync(countryDb)) : null,
       asnDb ? new Reader<AsnResponse>(readFileSync(asnDb)) : null,
     );
   }
@@ -37,9 +40,22 @@ export class MmdbGeoLookup implements GeoLookup {
     let country: string | null = null;
     let asn: number | null = null;
     let asnOrg: string | null = null;
+    let location: IpLocation | null = null;
     try {
       const c = this.country?.get(ip);
       country = (c?.country?.iso_code ?? c?.registered_country?.iso_code ?? null)?.slice(0, 2) ?? null;
+      // City editions add these; a Country edition leaves them out and the location stays null.
+      if (c?.location || c?.city) {
+        const sub = c.subdivisions?.[0];
+        location = toLocation({
+          city: c.city?.names?.en ?? null,
+          region: sub?.iso_code ?? sub?.names?.en ?? null,
+          latitude: c.location?.latitude ?? null,
+          longitude: c.location?.longitude ?? null,
+          accuracyRadiusKm: c.location?.accuracy_radius ?? null,
+          timezone: c.location?.time_zone ?? null,
+        });
+      }
     } catch {
       country = null;
     }
@@ -50,7 +66,7 @@ export class MmdbGeoLookup implements GeoLookup {
     } catch {
       asn = null;
     }
-    return { country, asn, asnOrg };
+    return { country, asn, asnOrg, location };
   }
 }
 

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { WEBHOOK_TYPES, type WebhookEndpointResponse, type WebhookType } from '@tbdname/signals/api';
+import { WEBHOOK_TYPES, type WebhookEndpointResponse, type WebhookType } from '@trace-id/signals/api';
 import { z } from 'zod';
 import { ApiError } from '../common/api-error.js';
 import { ENV, type Env } from '../config/env.js';

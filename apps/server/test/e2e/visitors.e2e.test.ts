@@ -1,7 +1,7 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type PrismaClient } from '@prisma/client';
-import { type VisitorHistoryResponse } from '@tbdname/signals/api';
-import { TEST_SCORING_CONFIG } from '@tbdname/signals/testing';
+import { type VisitorHistoryResponse } from '@trace-id/signals/api';
+import { TEST_SCORING_CONFIG } from '@trace-id/signals/testing';
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';

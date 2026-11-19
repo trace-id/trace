@@ -8,14 +8,17 @@ datasource db {
 }
 
 model Project {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String    @db.VarChar(200)
-  retentionDays Int       @default(30)
-  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
-  keys          ApiKey[]
-  visitors      Visitor[]
-  webhooks      WebhookEndpoint[]
-  members       ProjectMember[]
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String            @db.VarChar(200)
+  retentionDays  Int               @default(30)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  keys           ApiKey[]
+  visitors       Visitor[]
+  webhooks       WebhookEndpoint[]
+  members        ProjectMember[]
+  componentStats ComponentStat[]
+  fraudModels    FraudModel[]
+  nonces         RequestNonce[]
 
   @@map("projects")
 }
@@ -44,19 +47,72 @@ model ApiKey {
 }
 
 model Visitor {
-  id            String          @id @db.VarChar(32)
-  projectId     String          @db.Uuid
-  firstSeenAt   DateTime        @db.Timestamptz(3)
-  lastSeenAt    DateTime        @db.Timestamptz(3)
+  id            String            @id @db.VarChar(32)
+  projectId     String            @db.Uuid
+  firstSeenAt   DateTime          @db.Timestamptz(3)
+  lastSeenAt    DateTime          @db.Timestamptz(3)
   signalSummary Json
-  eventCount    Int             @default(0)
-  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  eventCount    Int               @default(0)
+  /// Shared by every browser on one device; see CrossBrowserService.resolveDeviceId. Null on rows from before it existed.
+  deviceId      String?           @db.VarChar(32)
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   buckets       VisitorBucket[]
   events        Event[]
   deliveries    WebhookDelivery[]
+  devices       DeviceProfile[]
+  accounts      VisitorAccount[]
+  labels        EventLabel[]
 
   @@index([projectId, lastSeenAt])
+  @@index([projectId, deviceId])
   @@map("visitors")
+}
+
+// Cross-browser linking: the latest device profile of each visitor on each network it used. netHash is a keyed
+// hash of the IPv4 /24 or IPv6 /64, never the address. Rows go when the visitor goes (retention, deletion).
+model DeviceProfile {
+  visitorId  String   @db.VarChar(32)
+  netHash    String   @db.Char(32)
+  projectId  String   @db.Uuid
+  coreHash   String?  @db.Char(28)
+  browser    String   @db.VarChar(16)
+  profile    Json
+  lastSeenAt DateTime @db.Timestamptz(3)
+  visitor    Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@id([visitorId, netHash])
+  @@index([projectId, netHash, lastSeenAt])
+  @@index([projectId, coreHash])
+  @@map("device_profiles")
+}
+
+// Accounts (the customer's linkedId) seen with each visitor, for multiAccount / accountSharing and the device graph.
+// Rows go when the visitor goes, or when lastSeenAt falls out of retention.
+model VisitorAccount {
+  visitorId   String   @db.VarChar(32)
+  linkedId    String   @db.VarChar(256)
+  projectId   String   @db.Uuid
+  firstSeenAt DateTime @db.Timestamptz(3)
+  lastSeenAt  DateTime @db.Timestamptz(3)
+  visitor     Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@id([visitorId, linkedId])
+  @@index([projectId, linkedId, lastSeenAt])
+  @@map("visitor_accounts")
+}
+
+// How many visitors of a project share each component value, for the linkage matcher. Rebuilt from visitors by the
+// maintenance job; values seen on a single visitor are left out (the matcher treats missing values as rare).
+// component "_total" / value "_" holds the visitor count.
+model ComponentStat {
+  projectId String  @db.Uuid
+  component String  @db.VarChar(24)
+  value     String  @db.VarChar(64)
+  visitors  Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, component, value])
+  @@map("component_stats")
 }
 
 model VisitorBucket {
@@ -103,6 +159,49 @@ model Event {
   @@index([visitorId, createdAt])
   @@index([projectId, linkedId, createdAt])
   @@map("events")
+}
+
+/// A customer's verdict on an event for one fraud type. The signals that fired are copied here, so training data
+/// outlives event retention; deleting the visitor deletes its labels.
+model EventLabel {
+  projectId String   @db.Uuid
+  eventId   String   @db.Uuid
+  label     String   @db.VarChar(32)
+  fraud     Boolean
+  visitorId String   @db.VarChar(32)
+  detected  String[]
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  visitor   Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, eventId, label])
+  @@index([projectId, label, updatedAt])
+  @@index([visitorId])
+  @@map("event_labels")
+}
+
+/// Request nonces seen in the last 24 hours, for replay detection. Random values, no personal data.
+model RequestNonce {
+  projectId String   @db.Uuid
+  nonce     String   @db.Char(32)
+  createdAt DateTime @db.Timestamptz(3)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, nonce])
+  @@index([createdAt])
+  @@map("request_nonces")
+}
+
+/// The trained model for one fraud type (FraudModel in @trace-id/signals/fraud-score).
+model FraudModel {
+  projectId String   @db.Uuid
+  label     String   @db.VarChar(32)
+  model     Json
+  trainedAt DateTime @db.Timestamptz(3)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, label])
+  @@map("fraud_models")
 }
 
 model WebhookEndpoint {

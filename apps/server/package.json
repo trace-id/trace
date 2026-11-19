@@ -1,5 +1,5 @@
 {
-  "name": "tbdname-server",
+  "name": "trace-server",
   "version": "0.1.0",
   "private": true,
   "description": "Ingest, identification, verification API.",
@@ -11,10 +11,13 @@
     "lint": "eslint src test",
     "test": "vitest run",
     "start": "node dist/main.js",
-    "dev": "tsx watch src/main.ts",
+    "dev": "prisma generate && node scripts/dev.mjs",
     "db:deploy": "prisma migrate deploy",
     "keys:create": "tsx src/scripts/create-keys.ts",
-    "accuracy": "tsx src/accuracy/run-accuracy.ts"
+    "accuracy": "tsx src/accuracy/run-accuracy.ts",
+    "tune": "tsx src/scripts/tune-weights.ts",
+    "crawler-ranges": "tsx src/scripts/fetch-crawler-ranges.ts",
+    "ip-data": "tsx src/scripts/fetch-ip-data.ts"
   },
   "dependencies": {
     "@nestjs/common": "11.2.8",
@@ -22,8 +25,11 @@
     "@nestjs/platform-fastify": "11.2.8",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@tbdname/sdk-js": "0.1.0",
-    "@tbdname/signals": "0.1.0",
+    "@trace-id/embed": "0.1.0",
+    "@trace-id/ip-intel": "0.1.0",
+    "@trace-id/sdk-js": "0.1.0",
+    "@trace-id/sdk-node": "0.1.0",
+    "@trace-id/signals": "0.1.0",
     "better-auth": "1.7.14",
     "fastify": "5.12.7",
     "ioredis": "5.11.1",
@@ -37,7 +43,7 @@
   "devDependencies": {
     "@nestjs/testing": "11.2.8",
     "@swc/core": "1.13.21",
-    "@tbdname/sdk-node": "0.1.0",
+    "@trace-id/sdk-react-native": "0.1.0",
     "@types/pg": "8.23.1",
     "tsx": "4.23.15",
     "unplugin-swc": "1.6.0"

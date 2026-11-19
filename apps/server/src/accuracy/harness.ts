@@ -1,5 +1,6 @@
-import { type IdentificationConfig } from '@tbdname/signals/config';
-import { type Components } from '@tbdname/signals/types';
+import { type IdentificationConfig } from '@trace-id/signals/config';
+import { type FrequencyTable } from '@trace-id/signals/linkage';
+import { type ComponentName, type Components } from '@trace-id/signals/types';
 import { bucketHashes, type CandidateSource, matchVisitor, type VisitorSnapshot } from '../identification/engine.js';
 
 export interface FixtureSession {
@@ -44,8 +45,23 @@ export interface AccuracyReport {
 class MemoryStore implements CandidateSource {
   private readonly visitors = new Map<string, VisitorSnapshot>();
   private readonly buckets = new Map<string, Set<string>>();
+  private readonly counts = new Map<string, number>();
 
   constructor(private readonly config: IdentificationConfig) {}
+
+  /** Visitors per component value, kept in step with each visitor's latest components (as the server does). */
+  async frequencies(): Promise<FrequencyTable> {
+    const counts = this.counts;
+    return { total: this.visitors.size, count: (c: ComponentName, v: string) => counts.get(`${c}:${v}`) ?? 0 };
+  }
+
+  private bump(components: Components, by: number): void {
+    for (const [c, v] of Object.entries(components)) {
+      if (v === undefined) continue;
+      const key = `${c}:${v}`;
+      this.counts.set(key, (this.counts.get(key) ?? 0) + by);
+    }
+  }
 
   async byBuckets(hashes: string[], limit: number): Promise<VisitorSnapshot[]> {
     const ids = new Set<string>();
@@ -58,6 +74,9 @@ class MemoryStore implements CandidateSource {
   }
 
   save(id: string, components: Components, at: Date): void {
+    const previous = this.visitors.get(id);
+    if (previous) this.bump(previous.components, -1);
+    this.bump(components, 1);
     this.visitors.set(id, { id, components, lastSeenAt: at });
     for (const h of bucketHashes(components, this.config.buckets)) {
       let set = this.buckets.get(h);

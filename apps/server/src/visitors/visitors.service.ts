@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type MatchKind, type TagValue, type VisitorHistoryResponse } from '@tbdname/signals/api';
+import { type MatchKind, type TagValue, type VisitorHistoryResponse } from '@trace-id/signals/api';
 import { ApiError } from '../common/api-error.js';
 import { decodeCursor, encodeCursor, parseLimit } from '../common/cursor.js';
 import { PrismaService } from '../infra/prisma.service.js';
@@ -44,6 +44,7 @@ export class VisitorsService {
     const last = page[page.length - 1];
     return {
       visitorId: visitor.id,
+      deviceId: visitor.deviceId ?? visitor.id,
       firstSeenAt: visitor.firstSeenAt.toISOString(),
       lastSeenAt: visitor.lastSeenAt.toISOString(),
       eventCount: visitor.eventCount,

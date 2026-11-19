@@ -17,7 +17,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Cross-Origin-Resource-Policy': 'cross-origin',
 };
 
-function configureFastify(instance: FastifyInstance): void {
+function configureFastify(instance: FastifyInstance, credentials: boolean): void {
   // The SDK posts JSON as text/plain so browsers skip the CORS preflight.
   instance.removeContentTypeParser('text/plain');
   instance.addContentTypeParser(
@@ -33,6 +33,10 @@ function configureFastify(instance: FastifyInstance): void {
     }
     if (req.url.startsWith('/v1/identify')) void reply.header('Vary', 'Origin');
     if (req.corsOrigin) void reply.header('Access-Control-Allow-Origin', req.corsOrigin);
+    // First-party cookie mode: lets an SDK with firstPartyCookie read the response of a credentialed request.
+    if (credentials && req.corsOrigin && req.url.startsWith('/v1/identify')) {
+      void reply.header('Access-Control-Allow-Credentials', 'true');
+    }
     done(null, payload);
   });
 }
@@ -74,7 +78,7 @@ export async function createApp(deps: AppDependencies): Promise<NestFastifyAppli
     logger: false,
     return503OnClosing: true,
   });
-  configureFastify(adapter.getInstance());
+  configureFastify(adapter.getInstance(), deps.env.VISITOR_COOKIE);
   const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(deps), adapter, {
     logger: deps.env.NODE_ENV === 'test' ? ['error'] : ['log', 'warn', 'error'],
     bufferLogs: false,

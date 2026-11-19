@@ -1,5 +1,5 @@
-import { hashComponent } from '@tbdname/signals/hash';
-import { type Components } from '@tbdname/signals/types';
+import { hashComponent } from '@trace-id/signals/hash';
+import { type Components } from '@trace-id/signals/types';
 import { type Fixture, type FixtureSession } from './harness.js';
 
 /**

@@ -8,8 +8,9 @@ import {
   type MeResponse,
   type ProjectResponse,
   type UsageResponse,
-} from '@tbdname/signals/api';
-import { makePayload, TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@tbdname/signals/testing';
+} from '@trace-id/signals/api';
+import { TEST_SCORING_CONFIG, TEST_USER_AGENT } from '@trace-id/signals/testing';
+import { makePayload } from '../payload.js';
 import { type FastifyInstance, type LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.factory.js';
@@ -23,7 +24,7 @@ const DASHBOARD = 'http://localhost:3000';
 const SITE = 'https://shop.example.test';
 const PASSWORD = 'correct horse battery staple';
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres)', () => {
   let closed: NestFastifyApplication;
@@ -159,6 +160,8 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
         method: 'POST',
         url: `/v1/identify?apiKey=${pub.key}`,
         headers: { 'content-type': 'text/plain', origin: SITE, 'user-agent': TEST_USER_AGENT },
+        // Different networks, so the two calls are not linked as one device in two browsers.
+        remoteAddress: bot ? '198.18.1.1' : '198.18.2.1',
         payload: JSON.stringify({
           signals: makePayload({ components: { canvas: 'ab'.repeat(14), audio: 'cd'.repeat(14) }, bot: { webdriver: bot } }),
           sdk: { name: 't', version: '0' },
@@ -178,6 +181,21 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
 
     const detail = (await call('bob', 'GET', `/v1/projects/${projectId}/events/${flagged.eventId}`)).json<EventResponse>();
     expect(detail.reasons[0]?.signal).toBe('bot');
+
+    // Fraud labels: admins label, viewers read.
+    const labelUrl = `/v1/projects/${projectId}/events/${flagged.eventId}/labels/payment`;
+    expect((await call('bob', 'PUT', labelUrl, { fraud: true })).statusCode).toBe(403);
+    expect((await call('alice', 'PUT', labelUrl, { fraud: true })).json()).toEqual({ eventId: flagged.eventId, label: 'payment', fraud: true });
+    const labels = (await call('bob', 'GET', `/v1/projects/${projectId}/events/${flagged.eventId}/labels`)).json<{ labels: unknown[] }>();
+    expect(labels.labels).toMatchObject([{ label: 'payment', fraud: true }]);
+    expect((await call('bob', 'GET', `/v1/projects/${projectId}/fraud-models`)).json()).toEqual({
+      models: [],
+      untrained: [{ label: 'payment', n: 1, positives: 1 }],
+    });
+    expect((await call('bob', 'POST', `/v1/projects/${projectId}/fraud-models/train`)).statusCode).toBe(403);
+    expect((await call('alice', 'POST', `/v1/projects/${projectId}/fraud-models/train`)).statusCode).toBe(200);
+    expect((await call('bob', 'DELETE', labelUrl)).statusCode).toBe(403);
+    expect((await call('alice', 'DELETE', labelUrl)).statusCode).toBe(204);
 
     const usage = (await call('alice', 'GET', `/v1/projects/${projectId}/usage?days=7`)).json<UsageResponse>();
     expect(usage.days).toHaveLength(7);
