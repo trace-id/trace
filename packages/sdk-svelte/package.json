@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "LICENSE"
   ],
   "scripts": {
@@ -39,5 +40,14 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/sdk-svelte"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/sdk-svelte#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

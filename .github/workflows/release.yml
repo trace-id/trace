@@ -51,7 +51,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # only needed if trusted publishing is not set up
         run: |
-          for pkg in signals sdk-js sdk-react sdk-vue sdk-svelte sdk-angular sdk-solid sdk-nuxt sdk-node sdk-next mcp-server proxy-cloudflare proxy-edge; do
+          for pkg in signals ip-intel sdk-js sdk-react sdk-vue sdk-svelte sdk-angular sdk-solid sdk-nuxt sdk-react-native sdk-node sdk-next embed mcp-server proxy-cloudflare proxy-edge; do
             dir="packages/$pkg"
             name=$(jq -r .name "$dir/package.json")
             if npm view "$name@${{ needs.check.outputs.version }}" version >/dev/null 2>&1; then

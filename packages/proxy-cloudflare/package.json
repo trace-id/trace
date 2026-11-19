@@ -20,6 +20,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "LICENSE"
   ],
   "scripts": {
@@ -31,5 +32,14 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/proxy-cloudflare"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/proxy-cloudflare#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

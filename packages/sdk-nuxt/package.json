@@ -20,6 +20,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "LICENSE"
   ],
   "scripts": {
@@ -43,5 +44,14 @@
     "nuxt": {
       "optional": true
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/sdk-nuxt"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/sdk-nuxt#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

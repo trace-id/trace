@@ -14,7 +14,7 @@ export interface ModuleOptions {
 export default defineNuxtModule<ModuleOptions>({
   meta: { name: '@trace-id/sdk-nuxt', configKey: 'trace', compatibility: { nuxt: '>=3.13.0' } },
   defaults: {},
-  setup(options, nuxt) {
+  setup(options: ModuleOptions, nuxt: { options: { runtimeConfig: { public: Record<string, unknown> } } }) {
     const { resolve } = createResolver(import.meta.url);
 
     // Public runtime config only: the secret key never belongs here (see the server route in the docs).

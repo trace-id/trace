@@ -5,7 +5,7 @@ equals the tag, then publishes in parallel:
 
 | What | Where | Users install with |
 | --- | --- | --- |
-| `@trace-id/signals`, `sdk-js`, `sdk-react`, `sdk-vue`, `sdk-svelte`, `sdk-node`, `mcp`, `proxy-cloudflare` | npm, with provenance | `npm install @trace-id/sdk-js` |
+| Every `@trace-id/*` package that is not private: `signals`, `ip-intel`, `sdk-js`, `sdk-react`, `sdk-vue`, `sdk-svelte`, `sdk-angular`, `sdk-solid`, `sdk-nuxt`, `sdk-react-native`, `sdk-node`, `sdk-next`, `embed`, `mcp`, `proxy-cloudflare`, `proxy-edge` | npm, with provenance | `npm install @trace-id/sdk-js` |
 | Python SDK | PyPI (`trace-device`) | `pip install trace-device` |
 | Server and dashboard images (amd64 + arm64, with SBOM) | `ghcr.io/<owner>/trace-server`, `trace-dashboard` | `docker pull` |
 
@@ -19,8 +19,7 @@ repository's own token.
 
 1. **GitHub**: push the repository. In Settings, Environments, create `npm` and `pypi` (optionally with required
    reviewers, so every publish waits for a click).
-2. **npm**: create the `trace` organisation on npmjs.com (free for public packages). If the name is taken, pick another
-   scope and replace `@trace-id/` everywhere in one pass. For each package, under Settings, Trusted publishing, add GitHub
+2. **npm**: the `trace-id` organisation exists on npmjs.com (free for public packages). For each package, under Settings, Trusted publishing, add GitHub
    Actions with this repository, workflow `release.yml` and environment `npm`. A first publish of a new package may need
    a token: create a granular automation token, save it as the `NPM_TOKEN` repository secret for that one release, then
    delete it.

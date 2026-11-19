@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "description": "Angular bindings for Trace: provideTrace() and injectVisitorData() with signals.",
   "license": "MIT",
-  "keywords": ["angular", "signals", "fraud", "device-identification", "trace"],
+  "keywords": [
+    "angular",
+    "signals",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -12,7 +18,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "LICENSE"],
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -34,5 +44,14 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/sdk-angular"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/sdk-angular#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

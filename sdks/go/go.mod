@@ -1,3 +1,3 @@
-module github.com/trace-dev/trace/sdks/go
+module github.com/trace-id/trace/sdks/go
 
 go 1.21
