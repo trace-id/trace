@@ -5,6 +5,13 @@ name: Release
 on:
   push:
     tags: ['v*.*.*']
+  # Manual run for an existing version, for example to publish only the container images after fixing a Dockerfile.
+  # The package versions in the checked-out commit must equal `version`; npm and PyPI are not published from here.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish the images as, without the v (for example 0.1.0)
+        required: true
 
 permissions:
   contents: read
@@ -14,13 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}
+      minor: ${{ steps.v.outputs.minor }}
     steps:
       - uses: actions/checkout@v4
       - id: v
         name: Tag matches every package version
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then version="${{ inputs.version }}"; else version="${GITHUB_REF_NAME#v}"; fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "minor=${version%.*}" >> "$GITHUB_OUTPUT"
           bad=0
           for f in packages/*/package.json; do
             if [ "$(jq -r .private $f)" = "true" ]; then continue; fi
@@ -32,6 +41,7 @@ jobs:
 
   npm:
     needs: check
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -64,6 +74,7 @@ jobs:
 
   pypi:
     needs: check
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -92,6 +103,7 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false # a failure in one image must not cancel the other
       matrix:
         app: [server, dashboard]
     steps:
@@ -108,8 +120,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/trace-${{ matrix.app }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.check.outputs.version }}
+            type=raw,value=${{ needs.check.outputs.minor }}
             type=raw,value=latest
       - uses: docker/build-push-action@v6
         with:

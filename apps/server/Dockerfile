@@ -18,7 +18,9 @@ COPY packages/proxy-cloudflare/package.json packages/proxy-cloudflare/
 COPY apps/server/package.json apps/server/
 COPY apps/dashboard/package.json apps/dashboard/
 COPY apps/server/prisma apps/server/prisma
-RUN npm ci --no-audit --no-fund
+# Install scripts are skipped: @swc/core (a dev-only test dependency) crashes in its post-install under the emulator that
+# builds the arm64 image. The two packages production needs scripts from (Prisma's engines) are rebuilt explicitly.
+RUN npm ci --no-audit --no-fund --ignore-scripts && npm rebuild @prisma/engines prisma
 COPY packages/signals packages/signals
 COPY packages/embed packages/embed
 COPY packages/sdk-node packages/sdk-node
