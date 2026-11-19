@@ -1,0 +1,12 @@
+name: trace_device
+description: "Flutter SDK for Trace: identify a device and its app install, then verify the event on your server."
+version: 0.1.0
+publish_to: none # remove when the repository is public and the package is released
+
+environment:
+  sdk: ">=2.19.0 <4.0.0"
+
+# The core (readings -> payload -> identify) uses only dart:* so it runs and is tested with plain Dart. The glue in
+# lib/flutter.dart reads the device through these packages; add them to YOUR app's pubspec (they are not listed here so
+# that the core's tests need no dependencies): device_info_plus, package_info_plus, flutter_secure_storage, crypto.
+dependencies: {}

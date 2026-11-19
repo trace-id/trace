@@ -1,0 +1,26 @@
+{
+  "note": "Test values only. Regenerate with: node sdks/test-vectors/generate.mjs",
+  "sealed": {
+    "key": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+    "valid": "AcuzZBf9RTptmQx7tcDTPHqJlchpINrqs5ZxuRjJBNUSxqg0665vBrKU5TipQe0HLXtPp32U6a_auBO4Lwbx5mAnMzQdmPvSYVTv7h_FfYtnBYZfOTS4fUmDV21WBsoyhZwms30nVRoIpwISkTF8UHVhjkkdKl8HxGGNRb25KokoCg0OgUoIf2kghffr97mAlOY8VVpcN1cpcbEHG0CrRrpOwBhsUip_fvDQYZ4a1DYST5-ot7Vp7vLJXxdCzNL6eB5pG5THpoFnEQ7YQulWkJzReBn5oHcOUAOOgfXmGxTW0Y4bVfDd7MhnFiLp1pgLnbzYcD5FWIK-1SKIQQ4L2A_wDOvxS1kcOS4obgFyr_adCUcbJ1GxO8AY_9v80X8o_WQ92zj-r0t9aw",
+    "tampered": "AcuzZBf9RTptmQx7tcDTPHqJlchpINrqs5dxuRjJBNUSxqg0665vBrKU5TipQe0HLXtPp32U6a_auBO4Lwbx5mAnMzQdmPvSYVTv7h_FfYtnBYZfOTS4fUmDV21WBsoyhZwms30nVRoIpwISkTF8UHVhjkkdKl8HxGGNRb25KokoCg0OgUoIf2kghffr97mAlOY8VVpcN1cpcbEHG0CrRrpOwBhsUip_fvDQYZ4a1DYST5-ot7Vp7vLJXxdCzNL6eB5pG5THpoFnEQ7YQulWkJzReBn5oHcOUAOOgfXmGxTW0Y4bVfDd7MhnFiLp1pgLnbzYcD5FWIK-1SKIQQ4L2A_wDOvxS1kcOS4obgFyr_adCUcbJ1GxO8AY_9v80X8o_WQ92zj-r0t9aw",
+    "expired": "AasB35suI9aor0IiALIUP6xWe1TLeUs1yjE7Y0z6jz51ZjpO-1ozh26nj43YDEEKZqnOc5DgJmo-PDW0sZiDMefFXHb79Sf_FuLvUkjNGqtb9HsonjthUihvkAnL0isSwbbAEqGYqG4r0D0ZU1miQTn_y88qeZKIlpbA1_kR4GZ9fQrEMYQ6A4qMUf7vxRELZSESG4laVJGNcl6jYJLWtKUBqpARSyd1lOM2agVtmOTJvjEh2zQ0wHmq6ZgCviOCbnoV37uF6lLSU43-jGo--XeXUArp0-Ijvd6Y0peAADWopqWVGFu8Me9MTLRiqXHJgWZ9kigVktuxVfj2HbvDzaLmp8X8LWP7d775nW_PExQyIMXJfzNNZY1ie98U7T0mUecF31WNqSdj",
+    "expect": {
+      "eventId": "01a1dcf6-53b8-7c68-bd1d-65941803eae7",
+      "suspectScore": 75
+    }
+  },
+  "webhook": {
+    "secret": "whsec_test_only_0123456789abcdef",
+    "body": "{\"id\":\"wh_1\",\"type\":\"event.created\",\"createdAt\":\"2026-11-15T12:00:00.000Z\",\"data\":{\"eventId\":\"01a1dcf6-53b8-7c68-bd1d-65941803eae7\",\"visitorId\":\"LKf5TfnSd3QB5FPbT13g\",\"deviceId\":\"LKf5TfnSd3QB5FPbT13g\",\"confidence\":0.99,\"matchKind\":\"token\",\"suspectScore\":75,\"reasons\":[{\"signal\":\"bot\",\"contribution\":60},{\"signal\":\"virtualMachine\",\"contribution\":15}],\"signals\":{\"bot\":{\"detected\":true,\"details\":{\"headlessUserAgent\":true}}},\"createdAt\":\"2026-11-15T12:00:00.000Z\",\"expiresAt\":\"2099-01-01T00:00:00.000Z\"}}",
+    "timestamp": 1794744000,
+    "signature": "t=1794744000,v1=39f05fb453561c2d7fb9edf5e0b910d60e5756842d1eb8a5481f5df5c4733aca",
+    "badSignature": "t=1794744000,v1=0000000000000000000000000000000000000000000000000000000000000000",
+    "nowAccepted": 1794744010,
+    "nowTooLate": 1794744301
+  },
+  "eventId": {
+    "valid": "01a1dcf6-53b8-7c68-bd1d-65941803eae7",
+    "invalid": "not-an-id"
+  }
+}

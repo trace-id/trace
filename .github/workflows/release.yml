@@ -1,0 +1,123 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish. Every package version must equal the tag (checked first).
+# One-time setup (npm trusted publisher, PyPI trusted publisher, environments): see RELEASING.md.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        name: Tag matches every package version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          bad=0
+          for f in packages/*/package.json; do
+            if [ "$(jq -r .private $f)" = "true" ]; then continue; fi
+            v=$(jq -r .version "$f"); [ "$v" = "$version" ] || { echo "$f is $v, tag is $version"; bad=1; }
+          done
+          py=$(sed -n 's/^version = "\(.*\)"/\1/p' sdks/python/pyproject.toml)
+          [ "$py" = "$version" ] || { echo "sdks/python is $py, tag is $version"; bad=1; }
+          exit $bad
+
+  npm:
+    needs: check
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # trusted publishing and provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm install -g npm@^11.5.1 # trusted publishing needs npm 11.5.1+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: Publish in dependency order
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # only needed if trusted publishing is not set up
+        run: |
+          for pkg in signals sdk-js sdk-react sdk-vue sdk-svelte sdk-angular sdk-solid sdk-nuxt sdk-node sdk-next mcp-server proxy-cloudflare proxy-edge; do
+            dir="packages/$pkg"
+            name=$(jq -r .name "$dir/package.json")
+            if npm view "$name@${{ needs.check.outputs.version }}" version >/dev/null 2>&1; then
+              echo "$name@${{ needs.check.outputs.version }} already published, skipping"; continue
+            fi
+            # Provenance requires the repository field to match this repository.
+            (cd "$dir" && npm pkg set repository.type=git "repository.url=git+https://github.com/${{ github.repository }}.git" "repository.directory=$dir")
+            npm publish --workspace "$dir" --access public --provenance
+          done
+
+  pypi:
+    needs: check
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write # PyPI trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install build cryptography
+      - name: Test
+        working-directory: sdks/python
+        run: PYTHONPATH=src python -m unittest discover -s tests
+      - name: Build
+        working-directory: sdks/python
+        run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdks/python/dist
+
+  docker:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [server, dashboard]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/trace-${{ matrix.app }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          sbom: true

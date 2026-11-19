@@ -14,21 +14,21 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: tbdname
-          POSTGRES_PASSWORD: tbdname
-          POSTGRES_DB: tbdname_test
+          POSTGRES_USER: trace
+          POSTGRES_PASSWORD: trace
+          POSTGRES_DB: trace_test
           # Non-UTC on purpose: catches timestamps written in the session timezone.
           TZ: Asia/Kolkata
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U tbdname" --health-interval 5s --health-timeout 3s --health-retries 20
+          --health-cmd "pg_isready -U trace" --health-interval 5s --health-timeout 3s --health-retries 20
       redis:
         image: redis:7-alpine
         ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
     env:
-      DATABASE_URL_TEST: postgresql://tbdname:tbdname@localhost:5432/tbdname_test
+      DATABASE_URL_TEST: postgresql://trace:trace@localhost:5432/trace_test
       REDIS_URL_TEST: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
@@ -62,5 +62,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f apps/server/Dockerfile -t tbdname-server:ci .
-      - run: docker build -f apps/dashboard/Dockerfile -t tbdname-dashboard:ci .
+      - run: docker build -f apps/server/Dockerfile -t trace-server:ci .
+      - run: docker build -f apps/dashboard/Dockerfile -t trace-dashboard:ci .
+
+  sdks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install cryptography django flask fastapi httpx
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - uses: dart-lang/setup-dart@v1
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Python, PHP (preinstalled on the runner), Java, Go, Ruby, .NET, Flutter (Dart core) and Kotlin (JVM core) SDKs against the shared test vectors.
+      - run: node sdks/run-tests.mjs
+
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Swift SDK (draft): payload and hash parity with the TypeScript SDK, and the client against a stubbed network.
+      - run: swift test
+        working-directory: sdks/swift

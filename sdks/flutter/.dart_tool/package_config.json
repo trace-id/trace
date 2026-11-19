@@ -1,0 +1,14 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "trace_device",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
+    }
+  ],
+  "generated": "2026-11-19T01:59:27.533061Z",
+  "generator": "pub",
+  "generatorVersion": "2.19.2"
+}

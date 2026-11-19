@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trace-device"
+version = "0.1.0"
+description = "Server SDK for Trace: verify events, webhooks and sealed results."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+sealed = ["cryptography>=42"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

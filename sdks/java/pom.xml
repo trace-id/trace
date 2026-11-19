@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.trace-id</groupId>
+  <artifactId>trace</artifactId>
+  <version>0.1.0</version>
+  <name>Trace</name>
+  <description>Server SDK for Trace: verify events, webhooks and sealed results. No dependencies.</description>
+  <licenses>
+    <license><name>MIT</name></license>
+  </licenses>
+  <properties>
+    <maven.compiler.release>11</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+</project>

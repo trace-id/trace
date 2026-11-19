@@ -1,0 +1,22 @@
+{
+  "name": "trace-id/trace",
+  "description": "Server SDK for Trace: verify events, webhooks and sealed results.",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.1",
+    "ext-json": "*",
+    "ext-openssl": "*",
+    "ext-zlib": "*"
+  },
+  "autoload": {
+    "files": [
+      "src/Trace.php",
+      "src/Guard.php",
+      "src/Laravel/TraceMiddleware.php"
+    ]
+  },
+  "scripts": {
+    "test": "php tests/run.php"
+  }
+}

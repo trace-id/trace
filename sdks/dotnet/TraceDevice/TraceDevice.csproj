@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PackageId>TraceDevice</PackageId>
+    <Version>0.1.0</Version>
+    <Description>Server SDK for Trace: verify events, webhooks and sealed results.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>The Trace contributors</Authors>
+  </PropertyGroup>
+</Project>

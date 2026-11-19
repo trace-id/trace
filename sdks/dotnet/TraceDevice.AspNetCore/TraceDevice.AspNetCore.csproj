@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PackageId>TraceDevice.AspNetCore</PackageId>
+    <Version>0.1.0</Version>
+    <Description>ASP.NET Core guard for Trace: middleware and a minimal-API endpoint filter.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>The Trace contributors</Authors>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../TraceDevice/TraceDevice.csproj" />
+  </ItemGroup>
+</Project>
