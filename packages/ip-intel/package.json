@@ -24,6 +24,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "LICENSE"
   ],
   "scripts": {
@@ -41,5 +42,14 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/ip-intel"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/ip-intel#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

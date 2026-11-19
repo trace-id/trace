@@ -20,6 +20,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "LICENSE"
   ],
   "scripts": {
@@ -37,10 +38,19 @@
   "devDependencies": {
     "@trace-id/signals": "0.1.0",
     "happy-dom": "21.0.4",
-    "vue": "3.5.13"
+    "vue": "3.5.45"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/sdk-vue"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/sdk-vue#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }

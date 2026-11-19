@@ -3,7 +3,14 @@
   "version": "0.1.0",
   "description": "SolidJS bindings for Trace: <IdentifyProvider> and createVisitorData().",
   "license": "MIT",
-  "keywords": ["solid", "solidjs", "solidstart", "fraud", "device-identification", "trace"],
+  "keywords": [
+    "solid",
+    "solidjs",
+    "solidstart",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -12,7 +19,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "LICENSE"],
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -33,5 +44,14 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trace-id/trace.git",
+    "directory": "packages/sdk-solid"
+  },
+  "homepage": "https://github.com/trace-id/trace/tree/main/packages/sdk-solid#readme",
+  "bugs": {
+    "url": "https://github.com/trace-id/trace/issues"
   }
 }
