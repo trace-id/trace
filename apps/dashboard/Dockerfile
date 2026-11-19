@@ -4,17 +4,23 @@ WORKDIR /repo
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/signals/package.json packages/signals/
+COPY packages/embed/package.json packages/embed/
 COPY packages/sdk-js/package.json packages/sdk-js/
 COPY packages/sdk-react/package.json packages/sdk-react/
+COPY packages/sdk-vue/package.json packages/sdk-vue/
+COPY packages/sdk-svelte/package.json packages/sdk-svelte/
 COPY packages/sdk-node/package.json packages/sdk-node/
+COPY packages/ip-intel/package.json packages/ip-intel/
+COPY packages/sdk-react-native/package.json packages/sdk-react-native/
+COPY packages/mcp-server/package.json packages/mcp-server/
+COPY packages/proxy-cloudflare/package.json packages/proxy-cloudflare/
 COPY apps/server/package.json apps/server/
-COPY apps/server/prisma apps/server/prisma
 COPY apps/dashboard/package.json apps/dashboard/
-COPY docs/package.json docs/
+COPY apps/server/prisma apps/server/prisma
 RUN npm ci --no-audit --no-fund --ignore-scripts
 COPY packages/signals packages/signals
 COPY apps/dashboard apps/dashboard
-RUN npm run build -w @tbdname/signals && npm run build -w tbdname-dashboard
+RUN npm run build -w @trace-id/signals && npm run build -w trace-dashboard
 
 FROM node:22-bookworm-slim
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0

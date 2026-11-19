@@ -11,11 +11,20 @@ export interface ApiState<T> {
 }
 
 /** Fetches on mount and whenever `path` changes; pass null to skip. */
-export function useApi<T>(path: string | null): ApiState<T> {
+export function useApi<T>(path: string | null, options: { intervalMs?: number } = {}): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(path !== null);
   const [tick, setTick] = useState(0);
+
+  const intervalMs = options.intervalMs;
+  useEffect(() => {
+    if (path === null || !intervalMs) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') setTick((t) => t + 1);
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [path, intervalMs]);
 
   useEffect(() => {
     if (path === null) return;

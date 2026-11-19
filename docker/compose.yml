@@ -1,13 +1,13 @@
-name: tbdname
+name: trace
 
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-tbdname}
+      POSTGRES_USER: ${POSTGRES_USER:-trace}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in docker/.env}
-      POSTGRES_DB: ${POSTGRES_DB:-tbdname}
+      POSTGRES_DB: ${POSTGRES_DB:-trace}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     init: true
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tbdname}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tbdname}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trace}
       REDIS_URL: redis://redis:6379
       TOKEN_SECRET: ${TOKEN_SECRET:?set TOKEN_SECRET in docker/.env}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in docker/.env}

@@ -1,82 +1,81 @@
 'use client';
 
-import type { MeResponse } from '@tbdname/signals/api';
-import Link from 'next/link';
-import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useMemo, type ReactNode } from 'react';
-import { ErrorBox, Loading } from '@/components/ui';
+import type { MeResponse } from '@trace-id/signals/api';
+import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { CommandPalette, Sidebar, Topbar, usePaletteShortcut, Wordmark } from '@/components/shell/shell';
+import { Shortcuts } from '@/components/shell/shortcuts';
+import { ToastProvider } from '@/components/ui/toast';
+import { ErrorBanner, Skeleton } from '@/components/ui/primitives';
 import { ProjectContext } from '@/lib/project-context';
 import { useApi } from '@/lib/use-api';
 
-const NAV = [
-  ['', 'Overview'],
-  ['/events', 'Events'],
-  ['/keys', 'Keys'],
-  ['/webhooks', 'Webhooks'],
-  ['/settings', 'Settings'],
-] as const;
+const RANGE_KEY = 'trace-range';
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
   const { projectId } = useParams<{ projectId: string }>();
-  const pathname = usePathname();
-  const router = useRouter();
   const me = useApi<MeResponse>('/v1/me');
   const project = me.data?.projects.find((p) => p.id === projectId);
+  const [range, setRangeState] = useState(7);
+  const [palette, setPalette] = useState(false);
+  usePaletteShortcut(setPalette);
+
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(RANGE_KEY));
+      if ([1, 7, 30, 90].includes(saved)) setRangeState(saved);
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
+  const setRange = useCallback((days: number) => {
+    setRangeState(days);
+    try {
+      localStorage.setItem(RANGE_KEY, String(days));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const ctx = useMemo(
-    () => (project ? { project, canEdit: project.role !== 'viewer', reloadProject: me.reload } : null),
-    [project, me.reload],
+    () =>
+      project && me.data
+        ? { project, projects: me.data.projects, user: me.data.user, canEdit: project.role !== 'viewer', reloadProject: me.reload, range, setRange }
+        : null,
+    [project, me.data, me.reload, range, setRange],
   );
 
-  async function signOut() {
-    await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    window.location.assign('/login');
+  if (!ctx) {
+    return (
+      <div className="grid min-h-screen place-items-center px-6">
+        {me.loading && !me.data ? (
+          <div className="grid w-full max-w-sm justify-items-center gap-6">
+            <Wordmark />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        ) : (
+          <div className="w-full max-w-md">
+            <ErrorBanner message={me.error ?? 'Project not found, or you are not a member.'} />
+          </div>
+        )}
+      </div>
+    );
   }
 
-  const base = `/projects/${projectId}`;
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">Device intelligence</div>
-        {me.data && (
-          <select
-            aria-label="Project"
-            value={projectId}
-            onChange={(e) => router.push(e.target.value === 'new' ? '/projects/new' : `/projects/${e.target.value}`)}
-            style={{ marginBottom: 12 }}
-          >
-            {me.data.projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-            <option value="new">+ New project</option>
-          </select>
-        )}
-        {NAV.map(([suffix, label]) => {
-          const href = `${base}${suffix}`;
-          const active = suffix === '' ? pathname === base : pathname.startsWith(href);
-          return (
-            <Link key={label} href={href} className={`nav${active ? ' active' : ''}`}>
-              {label}
-            </Link>
-          );
-        })}
-        <div className="spacer" />
-        {me.data && <div className="muted small" style={{ padding: '0 8px' }}>{me.data.user.email}</div>}
-        <button onClick={signOut} style={{ margin: '8px' }}>
-          Sign out
-        </button>
-      </aside>
-      <main className="main">
-        {me.loading && !me.data ? (
-          <Loading />
-        ) : !ctx ? (
-          <ErrorBox message={me.error ?? 'Project not found, or you are not a member.'} />
-        ) : (
-          <ProjectContext.Provider value={ctx}>{children}</ProjectContext.Provider>
-        )}
-      </main>
-    </div>
+    <ProjectContext.Provider value={ctx}>
+      <ToastProvider>
+      <Shortcuts base={`/projects/${ctx.project.id}`} />
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Topbar onOpenPalette={() => setPalette(true)} />
+          <main className="mx-auto w-full max-w-[1720px] flex-1 px-4 py-8 sm:px-7 xl:px-10">{children}</main>
+        </div>
+      </div>
+      <CommandPalette open={palette} onOpenChange={setPalette} />
+      </ToastProvider>
+    </ProjectContext.Provider>
   );
 }
