@@ -46,6 +46,6 @@
     "@trace-id/sdk-react-native": "0.1.0",
     "@types/pg": "8.23.1",
     "tsx": "4.23.15",
-    "unplugin-swc": "1.6.0"
+    "unplugin-swc": "2.0.0"
   }
 }
