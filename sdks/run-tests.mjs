@@ -45,7 +45,9 @@ else results.push(['dotnet', null]);
 if (has('dart')) results.push(['flutter', run('flutter', 'dart run test/native_test.dart', join(here, 'flutter'))]);
 else results.push(['flutter', null]);
 
-if (has('swift', '--version')) results.push(['swift', run('swift', 'swift test', join(here, 'swift'))]);
+// The iOS SDK needs Apple's networking stack (Linux keeps URLSession in a separate module), so it runs on macOS only;
+// the `swift` job in CI covers it there.
+if (process.platform === 'darwin' && has('swift', '--version')) results.push(['swift', run('swift', 'swift test', join(here, 'swift'))]);
 else results.push(['swift', null]);
 if (has('gradle')) results.push(['kotlin', run('kotlin', 'gradle -q :core:run', join(here, 'kotlin'))]);
 else results.push(['kotlin', null]);

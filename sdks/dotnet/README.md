@@ -1,6 +1,6 @@
 # Trace (.NET)
 
-> **Unverified.** This SDK was written without a .NET SDK available, so it has not been compiled or run yet. Its tests are wired into CI (`sdks` job) and `node sdks/run-tests.mjs`; treat it as a draft until they pass.
+> **Status.** Builds and passes its tests in CI (.NET 8): signature and sealed-result checks run against the shared test vectors, and the ASP.NET Core guard is exercised with a test server. It has not yet been used in a production app, so start the guard in shadow mode.
 
 Server SDK: verify events, webhooks and sealed results, label events for the fraud score, and guard ASP.NET Core routes. .NET 8, no third-party dependencies.
 

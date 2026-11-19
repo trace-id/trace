@@ -11,10 +11,10 @@ server's own code with `node sdks/test-vectors/generate.mjs`).
 | Java 11+ | `java/` | none |
 | Go 1.21+ | `go/` | none |
 | Kotlin / Android | `kotlin/` | none; core tested against the TypeScript payloads, Android glue unverified |
-| Swift / iOS | `swift/` | none; unverified draft (CI on macOS), see its README |
+| Swift / iOS | `swift/` | none; core tested in CI on macOS, device glue unverified |
 | Dart / Flutter | `flutter/` | none; core tested against the TypeScript payloads, device glue unverified |
-| Ruby 3.0+ | `ruby/` | none (unverified draft, see its README) |
-| .NET 8 | `dotnet/` | none (unverified draft, see its README) |
+| Ruby 3.0+ | `ruby/` | none; tested in CI |
+| .NET 8 | `dotnet/` | none; tested in CI |
 
 Any other language can call the REST API directly: `GET /v1/events/:eventId` with `Authorization: Bearer sk_...`, and
 HMAC-SHA256 over `timestamp + "." + body` for webhooks (see docs/api.md).

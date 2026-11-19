@@ -100,6 +100,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      # Swift SDK (draft): payload and hash parity with the TypeScript SDK, and the client against a stubbed network.
+      # Swift SDK core: payload and hash parity with the TypeScript SDK, and the client against a stubbed network.
       - run: swift test
         working-directory: sdks/swift

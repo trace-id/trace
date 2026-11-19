@@ -2,10 +2,10 @@
 
 iOS SDK: identify a device and its app install, then verify the event on your server. Swift 5.7+, iOS 15+.
 
-**Status.** The core (`Hash.swift`, `Payload.swift`, `TraceClient.swift`) is plain Foundation. Its tests check that the payload and the hashes are identical to what the TypeScript React Native SDK produces (`../test-vectors/native-payload.json`), which the server's tamper check relies on. **Nothing here has been compiled yet**: this was written without a Mac, and CI (`swift` job, macOS) runs `swift test`. The UIKit glue in `Device.swift` (device readings and Keychain storage) is additionally untested on a device. Treat the package as a draft until CI passes.
+**Status.** The core (`Hash.swift`, `Payload.swift`, `TraceClient.swift`) is plain Foundation and passes its tests in CI on macOS: the payload and the hashes are identical to what the TypeScript React Native SDK produces (`../test-vectors/native-payload.json`), which the server's tamper check relies on, and the client is tested against a stubbed network. The UIKit glue in `Device.swift` (device readings and Keychain storage) only compiles for iOS, so CI does not build it and it is untested on a device: try it in your app first.
 
 ```swift
-// Package.swift of your app, or Xcode: File > Add Package Dependencies (until the repository is public, use a local path)
+// Package.swift of your app, or Xcode: File > Add Package Dependencies (SwiftPM needs `Package.swift` at a repository root, so until a split repository exists, add it as a local package)
 .package(path: "../trace/sdks/swift")
 ```
 

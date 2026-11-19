@@ -1,6 +1,6 @@
 # Trace (Ruby)
 
-> **Unverified.** This SDK was written without a Ruby toolchain available, so it has not been run yet. Its tests are wired into CI (`sdks` job) and `node sdks/run-tests.mjs`; treat it as a draft until they pass.
+> **Status.** Tested in CI (Ruby 3.3): signature and sealed-result checks run against the shared test vectors, and the Rack guard is exercised with stub requests. It has not yet been used in a production Rails app, so start the guard in shadow mode.
 
 Server SDK: verify events, webhooks and sealed results, label events for the fraud score, and guard Rack or Rails routes. Standard library only. Ruby 3.0+.
 

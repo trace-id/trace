@@ -10,8 +10,8 @@ Trace is open-source, self-hosted device identification and fraud signals. It re
 
 - **[trace](https://github.com/trace-id/trace)**: the server, dashboard, SDKs and documentation
 - **Browser and framework SDKs**: JavaScript, React, Next.js, Vue, Nuxt, Svelte, Angular, Solid
-- **Mobile SDKs**: React Native and Expo, Flutter, Kotlin, Swift (Swift and parts of Kotlin and Flutter are early drafts)
-- **Server SDKs**: Node.js, Python, PHP, Go, Java, Ruby, .NET (Ruby and .NET are early drafts), with framework guards for Express, Fastify, Django, Flask, FastAPI and Laravel
+- **Mobile SDKs**: React Native and Expo, Flutter, Kotlin, Swift (the device-reading layers of the native SDKs are newer than their cores; see each README)
+- **Server SDKs**: Node.js, Python, PHP, Go, Java, Ruby, .NET, with framework guards for Express, Fastify, Django, Flask, FastAPI and Laravel
 - **Edge proxies**: Cloudflare, Netlify, Vercel and Fastly, for first-party mode
 
 ### Principles

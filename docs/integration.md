@@ -15,15 +15,15 @@
 | Solid, SolidStart | `@trace-id/sdk-solid` | `<IdentifyProvider>`, `createVisitorData()` (signals) |
 | Svelte, SvelteKit | `@trace-id/sdk-svelte` | `createVisitorData(...)`: a store with `subscribe`; verify in `+server.ts` with `guardRequest` |
 | Android (Kotlin) | `sdks/kotlin` (`dev.trace.device`) | `createTraceClient(context, apiKey, endpoint)`, `trace.get()`; core tested against the TypeScript SDK's payloads, Android glue unverified |
-| iOS (Swift, draft) | `sdks/swift` (`TraceDevice`) | `makeTraceClient(apiKey:endpoint:)`, `try await trace.get()`; not yet compiled, tests run in CI on macOS |
+| iOS (Swift) | `sdks/swift` (`TraceDevice`) | `makeTraceClient(apiKey:endpoint:)`, `try await trace.get()`; core tested in CI on macOS against the TypeScript SDK's payloads, device glue unverified |
 | Flutter | `sdks/flutter` (`trace_device`) | `createTraceClient(...)`, `await trace.get()`; core tested against the TypeScript SDK's payloads, device glue unverified |
 | Node backend | `@trace-id/sdk-node` | `verifyEvent`, `verifyWebhook`, `unsealEventResult`; guards `traceGuard` (Express, Nest), `traceHook` (Fastify), `guardRequest` (Hono, Remix, Workers) |
 | Python backend | `trace-device` (PyPI) | `Client.get_event`, `verify_webhook`, `unseal_event_result`; guards for Django (`trace_device.django`), Flask (`trace_device.flask`) and FastAPI (`trace_device.fastapi`) |
 | PHP backend | `trace/trace` (Composer) | `Client::getEvent`, `Client::verifyWebhook`, `Client::unsealEventResult`; `Trace\Guard` and a Laravel middleware (`trace:reject_score=80`) |
 | WordPress, WooCommerce | `integrations/wordpress/trace-device` (plugin) | login, registration, comments and checkout checks; starts in shadow mode ([README](../integrations/wordpress/README.md)) |
 | Java backend | `io.github.trace-id:trace` (Maven) | `getEvent`, `verifyWebhook`, `unsealEventResult` |
-| Ruby backend (draft) | `trace-device` (RubyGems) | `Trace::Client#get_event`, `Trace.verify_webhook`, `Trace.unseal_event_result`, a Rack middleware for Rails |
-| .NET backend (draft) | `TraceDevice`, `TraceDevice.AspNetCore` (NuGet) | `TraceClient.GetEventAsync`, `TraceWebhooks.Verify`, `TraceSealed.Unseal`, `UseTraceGuard` middleware |
+| Ruby backend | `trace-device` (RubyGems) | `Trace::Client#get_event`, `Trace.verify_webhook`, `Trace.unseal_event_result`, a Rack middleware for Rails |
+| .NET backend | `TraceDevice`, `TraceDevice.AspNetCore` (NuGet) | `TraceClient.GetEventAsync`, `TraceWebhooks.Verify`, `TraceSealed.Unseal`, `UseTraceGuard` middleware |
 | Go backend | `github.com/trace-id/trace/sdks/go` | `Client.GetEvent`, `VerifyWebhook`, `UnsealEventResult`, `Guard` middleware for `net/http` |
 | Any other backend | REST | `GET /v1/events/:eventId` with `Authorization: Bearer sk_...` ([API](api.md)) |
 | First-party proxy | `@trace-id/proxy-cloudflare`, or the nginx/Caddy snippets below | serve the API from your own domain |
