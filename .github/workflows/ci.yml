@@ -31,7 +31,7 @@ jobs:
       DATABASE_URL_TEST: postgresql://trace:trace@localhost:5432/trace_test
       REDIS_URL_TEST: redis://localhost:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,7 +52,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -61,14 +61,14 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -f apps/server/Dockerfile -t trace-server:ci .
       - run: docker build -f apps/dashboard/Dockerfile -t trace-dashboard:ci .
 
   sdks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -99,7 +99,7 @@ jobs:
   swift:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Swift SDK (draft): payload and hash parity with the TypeScript SDK, and the client against a stubbed network.
       - run: swift test
         working-directory: sdks/swift
