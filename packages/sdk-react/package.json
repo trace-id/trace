@@ -1,8 +1,14 @@
 {
-  "name": "@tbdname/sdk-react",
+  "name": "@trace-id/sdk-react",
   "version": "0.1.0",
   "description": "React bindings: <IdentifyProvider> and useVisitorData().",
   "license": "MIT",
+  "keywords": [
+    "react",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -22,17 +28,21 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tbdname/sdk-js": "0.1.0"
+    "@trace-id/sdk-js": "0.1.0"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@tbdname/signals": "0.1.0",
+    "@trace-id/signals": "0.1.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "happy-dom": "21.0.4",
     "react": "19.3.1",
     "react-dom": "19.3.1"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

@@ -1,0 +1,35 @@
+{
+  "name": "@trace-id/proxy-cloudflare",
+  "version": "0.1.0",
+  "description": "Cloudflare Worker that serves Trace from your own domain (first-party mode), with real client IPs and JA4.",
+  "license": "MIT",
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "proxy",
+    "first-party",
+    "trace"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

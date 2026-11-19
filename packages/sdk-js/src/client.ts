@@ -1,6 +1,7 @@
-import { type IdentifyRequest, type IdentifyResponse, type TagValue } from '@tbdname/signals/api';
-import { type SignalPayload } from '@tbdname/signals/types';
+import { type IdentifyRequest, type IdentifyResponse, type TagValue } from '@trace-id/signals/api';
+import { type SignalPayload } from '@trace-id/signals/types';
 import { collectSignals } from './collect.js';
+import { BehaviorRecorder } from './collectors/behavior.js';
 import { clearToken, loadToken, saveToken } from './collectors/storage.js';
 import { IdentifyError, type IdentifyErrorCode } from './errors.js';
 import { SDK_NAME, SDK_VERSION } from './version.js';
@@ -14,6 +15,12 @@ export interface ClientOptions {
   timeoutMs?: number;
   /** Persist the visitor token in cookie, localStorage and IndexedDB. Default true. */
   persistToken?: boolean;
+  /**
+   * Also keep the visitor token in an HttpOnly cookie set by the server. Only works when the server is same-site with
+   * the page: served from a path or subdomain of your own site through a proxy (see the integration guide). Survives
+   * the 7-day cap Safari puts on storage that scripts write. Default false.
+   */
+  firstPartyCookie?: boolean;
   /** Start disabled until a consent manager calls `enable()`. Default true. */
   enabled?: boolean;
   /** Replaces signal collection; for tests. */
@@ -53,6 +60,7 @@ function isIdentifyResponse(value: unknown): value is IdentifyResponse {
 export class Client {
   private readonly options: Required<Omit<ClientOptions, 'collector'>> & Pick<ClientOptions, 'collector'>;
   private enabled: boolean;
+  private behavior: BehaviorRecorder | null = null;
 
   constructor(options: ClientOptions) {
     if (!options.apiKey.startsWith('pk_')) {
@@ -61,21 +69,35 @@ export class Client {
     this.options = {
       timeoutMs: 5000,
       persistToken: true,
+      firstPartyCookie: false,
       enabled: true,
       ...options,
       endpoint: options.endpoint.replace(/\/+$/, ''),
     };
     this.enabled = this.options.enabled;
+    if (this.enabled) this.behavior = new BehaviorRecorder();
   }
 
   enable(): void {
     this.enabled = true;
+    this.behavior ??= new BehaviorRecorder();
   }
 
-  /** Stops collection. Pass `clearStoredData` to also delete the persisted visitor token. */
+  /** Stops collection. Pass `clearStoredData` to also delete the persisted visitor token (and the server cookie). */
   async disable(clearStoredData = false): Promise<void> {
     this.enabled = false;
-    if (clearStoredData) await clearToken(STORAGE_TIMEOUT_MS);
+    this.behavior?.stop();
+    this.behavior = null;
+    if (!clearStoredData) return;
+    await clearToken(STORAGE_TIMEOUT_MS);
+    if (this.options.firstPartyCookie) {
+      await fetch(`${this.options.endpoint}/v1/identify/forget?apiKey=${encodeURIComponent(this.options.apiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: '{}',
+        credentials: 'include',
+      }).catch(() => undefined);
+    }
   }
 
   get isEnabled(): boolean {
@@ -102,7 +124,8 @@ export class Client {
   }
 
   private async run(opts: GetOptions, signal: AbortSignal): Promise<IdentifyResult> {
-    const collect = this.options.collector ?? (() => collectSignals());
+    const behavior = this.behavior?.snapshot();
+    const collect = this.options.collector ?? (() => collectSignals(behavior ? { behavior } : {}));
     const [signals, token] = await Promise.all([
       collect(),
       this.options.persistToken ? loadToken(STORAGE_TIMEOUT_MS) : Promise.resolve(null),
@@ -111,6 +134,9 @@ export class Client {
     if (token) body.token = token;
     if (opts.linkedId !== undefined) body.linkedId = opts.linkedId;
     if (opts.tags !== undefined) body.tags = opts.tags;
+    body.sentAt = Date.now();
+    const nonce = randomNonce();
+    if (nonce) body.nonce = nonce;
 
     let res: Response;
     try {
@@ -119,7 +145,7 @@ export class Client {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(body),
-        credentials: 'omit',
+        credentials: this.options.firstPartyCookie ? 'include' : 'omit',
         signal,
       });
     } catch (err) {
@@ -150,4 +176,11 @@ export class Client {
 
 export function createClient(options: ClientOptions): Client {
   return new Client(options);
+}
+
+/** 16 random bytes as hex, new for every identify call; null where Web Crypto is missing. */
+function randomNonce(): string | null {
+  const c = (globalThis as { crypto?: Crypto }).crypto;
+  if (!c?.getRandomValues) return null;
+  return Array.from(c.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
 }

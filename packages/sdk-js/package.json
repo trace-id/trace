@@ -1,8 +1,15 @@
 {
-  "name": "@tbdname/sdk-js",
+  "name": "@trace-id/sdk-js",
   "version": "0.1.0",
   "description": "Browser SDK: collects device signals and calls the identify endpoint.",
   "license": "MIT",
+  "keywords": [
+    "fraud",
+    "device-identification",
+    "browser-fingerprint",
+    "bot-detection",
+    "trace"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -34,10 +41,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tbdname/signals": "0.1.0"
+    "@trace-id/signals": "0.1.0"
   },
   "devDependencies": {
     "happy-dom": "21.0.4",
     "esbuild": "0.28.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

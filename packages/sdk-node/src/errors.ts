@@ -7,7 +7,9 @@ export type VerifyErrorCode =
   | 'expired'
   | 'rate_limited'
   | 'server_error'
-  | 'invalid_response';
+  | 'invalid_response'
+  | 'invalid_label'
+  | 'limit_reached';
 
 export class VerifyError extends Error {
   readonly code: VerifyErrorCode;

@@ -1,0 +1,38 @@
+{
+  "name": "@trace-id/sdk-angular",
+  "version": "0.1.0",
+  "description": "Angular bindings for Trace: provideTrace() and injectVisitorData() with signals.",
+  "license": "MIT",
+  "keywords": ["angular", "signals", "fraud", "device-identification", "trace"],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trace-id/sdk-js": "0.1.0"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=17.0.0"
+  },
+  "devDependencies": {
+    "@angular/core": "21.2.26",
+    "@trace-id/signals": "0.1.0",
+    "rxjs": "7.8.2",
+    "happy-dom": "21.0.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

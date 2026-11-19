@@ -1,4 +1,4 @@
-import { type DevtoolsIndicators } from '@tbdname/signals/types';
+import { type DevtoolsIndicators } from '@trace-id/signals/types';
 import { safe } from './safe.js';
 
 const THRESHOLD_PX = 160;

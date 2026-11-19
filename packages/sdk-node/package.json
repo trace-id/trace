@@ -1,8 +1,18 @@
 {
-  "name": "@tbdname/sdk-node",
+  "name": "@trace-id/sdk-node",
   "version": "0.1.0",
   "description": "Server helper: verify identification events with your secret key.",
   "license": "MIT",
+  "keywords": [
+    "fraud",
+    "device-identification",
+    "webhook",
+    "trace",
+    "express",
+    "fastify",
+    "nextjs",
+    "middleware"
+  ],
   "type": "module",
   "sideEffects": false,
   "engines": {
@@ -17,9 +27,33 @@
       "types": "./dist/errors.d.ts",
       "default": "./dist/errors.js"
     },
+    "./sealed": {
+      "types": "./dist/sealed.d.ts",
+      "default": "./dist/sealed.js"
+    },
     "./webhooks": {
       "types": "./dist/webhooks.d.ts",
       "default": "./dist/webhooks.js"
+    },
+    "./agents": {
+      "types": "./dist/agents.d.ts",
+      "default": "./dist/agents.js"
+    },
+    "./crawlers": {
+      "types": "./dist/crawlers.d.ts",
+      "default": "./dist/crawlers.js"
+    },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "default": "./dist/express.js"
+    },
+    "./fastify": {
+      "types": "./dist/fastify.d.ts",
+      "default": "./dist/fastify.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "default": "./dist/web.js"
     }
   },
   "files": [
@@ -33,6 +67,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tbdname/signals": "0.1.0"
+    "@trace-id/signals": "0.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "fastify": "5.12.7"
   }
 }

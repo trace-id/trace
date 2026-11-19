@@ -1,8 +1,14 @@
-import { COMPONENT_NAMES } from '@tbdname/signals/types';
+import { checkPayloadIntegrity } from '@trace-id/signals/integrity';
+import { COMPONENT_NAMES } from '@trace-id/signals/types';
 import { describe, expect, it } from 'vitest';
 import { collectSignals } from './collect.js';
 
 describe('collectSignals', () => {
+  it('produces payloads that pass the server integrity check (tamperedRequest)', async () => {
+    const p = await collectSignals({ probeTimeoutMs: 50 });
+    expect(checkPayloadIntegrity(p).mismatched).toEqual([]);
+  });
+
   it('produces a well-formed payload in a minimal DOM without throwing', async () => {
     const p = await collectSignals({ probeTimeoutMs: 50 });
     expect(p.v).toBe(1);

@@ -1,4 +1,4 @@
-import { makePayload } from '@tbdname/signals/testing';
+import { makePayload } from '@trace-id/signals/testing';
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

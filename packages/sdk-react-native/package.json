@@ -1,0 +1,81 @@
+{
+  "name": "@trace-id/sdk-react-native",
+  "version": "0.1.0",
+  "description": "React Native and Expo SDK: device identification and app fraud signals (emulator, root/jailbreak) with <IdentifyProvider> and useVisitorData().",
+  "license": "MIT",
+  "keywords": [
+    "react-native",
+    "expo",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/headless.d.ts",
+      "default": "./dist/headless.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trace-id/sdk-js": "0.1.0",
+    "@trace-id/signals": "0.1.0"
+  },
+  "peerDependencies": {
+    "expo-application": ">=6.0.0",
+    "expo-crypto": ">=14.0.0",
+    "expo-device": ">=7.0.0",
+    "expo-localization": ">=16.0.0",
+    "expo-secure-store": ">=14.0.0",
+    "react": "^18.2.0 || ^19.0.0",
+    "react-native": ">=0.76.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-application": {
+      "optional": true
+    },
+    "expo-crypto": {
+      "optional": true
+    },
+    "expo-device": {
+      "optional": true
+    },
+    "expo-localization": {
+      "optional": true
+    },
+    "expo-secure-store": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "happy-dom": "21.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

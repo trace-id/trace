@@ -1,18 +1,9 @@
+import { FONT_CANDIDATES } from '@trace-id/signals/fonts';
 import { safe } from './safe.js';
 
-const BASE_FONTS = ['monospace', 'sans-serif', 'serif'] as const;
+export { FONT_CANDIDATES, fontsMask } from '@trace-id/signals/fonts';
 
-const CANDIDATES = [
-  'Arial Black', 'Arial Narrow', 'Bahnschrift', 'Book Antiqua', 'Bookman Old Style', 'Calibri', 'Cambria',
-  'Candara', 'Century Gothic', 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Franklin Gothic',
-  'Futura', 'Garamond', 'Geneva', 'Gill Sans', 'Helvetica Neue', 'Impact', 'Lucida Console',
-  'Lucida Grande', 'Lucida Sans Unicode', 'Menlo', 'Monaco', 'MS Gothic', 'MS Mincho', 'MS Outlook',
-  'MS Reference Sans Serif', 'MT Extra', 'Optima', 'Palatino', 'Palatino Linotype', 'Segoe Print',
-  'Segoe Script', 'Segoe UI Emoji', 'SimSun', 'Source Code Pro', 'Tahoma', 'Trebuchet MS', 'Ubuntu',
-  'DejaVu Sans', 'Liberation Mono', 'Noto Color Emoji', 'Cantarell', 'Droid Sans', 'Roboto',
-  'Apple Color Emoji', 'Avenir', 'Avenir Next', 'Baskerville', 'Didot', 'Hoefler Text', 'Marker Felt',
-  'PingFang SC', 'Hiragino Sans', 'Yu Gothic', 'Malgun Gothic', 'Microsoft YaHei', 'Nirmala UI',
-];
+const BASE_FONTS = ['monospace', 'sans-serif', 'serif'] as const;
 
 /** Measurement-based: a font is present if text renders at a different size than every fallback. */
 export function readFonts(): string[] | null {
@@ -28,7 +19,7 @@ export function readFonts(): string[] | null {
       return span;
     };
     const base = BASE_FONTS.map((f) => ({ family: f, span: make(f) }));
-    const tests = CANDIDATES.map((font) => ({
+    const tests = FONT_CANDIDATES.map((font) => ({
       font,
       spans: BASE_FONTS.map((fallback) => make(`'${font}',${fallback}`)),
     }));

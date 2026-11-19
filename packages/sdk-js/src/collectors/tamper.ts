@@ -1,4 +1,4 @@
-import { type TamperIndicators } from '@tbdname/signals/types';
+import { type TamperIndicators } from '@trace-id/signals/types';
 import { safe } from './safe.js';
 import { browserFamily, osFamily, platformFamily, platformsCompatible } from './ua.js';
 

@@ -1,4 +1,4 @@
-import { type PrivacyIndicators } from '@tbdname/signals/types';
+import { type PrivacyIndicators } from '@trace-id/signals/types';
 import { safe, safeAsync } from './safe.js';
 import { browserFamily } from './ua.js';
 

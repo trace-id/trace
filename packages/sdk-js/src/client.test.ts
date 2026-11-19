@@ -1,4 +1,4 @@
-import { makePayload } from '@tbdname/signals/testing';
+import { makePayload } from '@trace-id/signals/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createClient } from './client.js';
 import { IdentifyError } from './errors.js';
@@ -44,6 +44,19 @@ describe('Client', () => {
     expect(body.linkedId).toBe('user-1');
     expect(body.tags).toEqual({ page: 'signup' });
     expect(body.token).toBeUndefined();
+    expect(body.nonce).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('sends credentials in first-party cookie mode, and asks the server to drop the cookie on disable', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, OK_BODY)));
+    vi.stubGlobal('fetch', fetchMock);
+    const c = client({ firstPartyCookie: true });
+    await c.get();
+    expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].credentials).toBe('include');
+    await c.disable(true);
+    const [url, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    expect(url).toBe('https://id.example.test/v1/identify/forget?apiKey=pk_test');
+    expect(init.credentials).toBe('include');
   });
 
   it('persists the token and sends it next time', async () => {

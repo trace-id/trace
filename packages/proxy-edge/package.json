@@ -1,0 +1,23 @@
+{
+  "name": "@trace-id/proxy-edge",
+  "version": "0.1.0",
+  "description": "First-party proxy for Trace on Netlify Edge, Vercel Edge and Fastly Compute: forwards the real client IP and JA4, fixes the cookie path.",
+  "license": "MIT",
+  "keywords": ["netlify", "vercel", "fastly", "edge", "proxy", "first-party", "trace"],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./netlify": { "types": "./dist/netlify.d.ts", "default": "./dist/netlify.js" },
+    "./vercel": { "types": "./dist/vercel.d.ts", "default": "./dist/vercel.js" },
+    "./fastly": { "types": "./dist/fastly.d.ts", "default": "./dist/fastly.js" }
+  },
+  "files": ["dist", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "publishConfig": { "access": "public", "provenance": true }
+}

@@ -1,8 +1,14 @@
 {
-  "name": "@tbdname/signals",
+  "name": "@trace-id/signals",
   "version": "0.1.0",
   "description": "Shared signal definitions, payload types and scoring helpers.",
   "license": "MIT",
+  "keywords": [
+    "fraud",
+    "device-intelligence",
+    "fingerprint",
+    "trace"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -30,6 +36,38 @@
       "types": "./dist/similarity.d.ts",
       "default": "./dist/similarity.js"
     },
+    "./crossbrowser": {
+      "types": "./dist/crossbrowser.d.ts",
+      "default": "./dist/crossbrowser.js"
+    },
+    "./ua": {
+      "types": "./dist/ua.d.ts",
+      "default": "./dist/ua.js"
+    },
+    "./fonts": {
+      "types": "./dist/fonts.d.ts",
+      "default": "./dist/fonts.js"
+    },
+    "./timezones": {
+      "types": "./dist/timezones.d.ts",
+      "default": "./dist/timezones.js"
+    },
+    "./tzoffset": {
+      "types": "./dist/tzoffset.d.ts",
+      "default": "./dist/tzoffset.js"
+    },
+    "./antidetect": {
+      "types": "./dist/antidetect.d.ts",
+      "default": "./dist/antidetect.js"
+    },
+    "./tls": {
+      "types": "./dist/tls.d.ts",
+      "default": "./dist/tls.js"
+    },
+    "./linkage": {
+      "types": "./dist/linkage.d.ts",
+      "default": "./dist/linkage.js"
+    },
     "./api": {
       "types": "./dist/api.d.ts",
       "default": "./dist/api.js"
@@ -37,6 +75,34 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
+    },
+    "./agents": {
+      "types": "./dist/agents.d.ts",
+      "default": "./dist/agents.js"
+    },
+    "./web-bot-auth": {
+      "types": "./dist/web-bot-auth.d.ts",
+      "default": "./dist/web-bot-auth.js"
+    },
+    "./geo": {
+      "types": "./dist/geo.d.ts",
+      "default": "./dist/geo.js"
+    },
+    "./rarity": {
+      "types": "./dist/rarity.d.ts",
+      "default": "./dist/rarity.js"
+    },
+    "./integrity": {
+      "types": "./dist/integrity.d.ts",
+      "default": "./dist/integrity.js"
+    },
+    "./fraud-score": {
+      "types": "./dist/fraud-score.d.ts",
+      "default": "./dist/fraud-score.js"
+    },
+    "./network": {
+      "types": "./dist/network.d.ts",
+      "default": "./dist/network.js"
     }
   },
   "files": [
@@ -48,5 +114,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
     "test": "vitest run"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

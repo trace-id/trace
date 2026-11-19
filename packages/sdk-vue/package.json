@@ -1,0 +1,46 @@
+{
+  "name": "@trace-id/sdk-vue",
+  "version": "0.1.0",
+  "description": "Vue 3 bindings for Trace: createIdentify() plugin and useVisitorData() composable.",
+  "license": "MIT",
+  "keywords": [
+    "vue",
+    "nuxt",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trace-id/sdk-js": "0.1.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@trace-id/signals": "0.1.0",
+    "happy-dom": "21.0.4",
+    "vue": "3.5.13"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

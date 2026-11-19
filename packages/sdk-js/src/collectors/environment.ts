@@ -1,4 +1,5 @@
-import { type DeviceAttributes, type UaBrand } from '@tbdname/signals/types';
+import { hardwareKey as sharedHardwareKey } from '@trace-id/signals/integrity';
+import { type DeviceAttributes, type UaBrand } from '@trace-id/signals/types';
 import { safe } from './safe.js';
 
 const MAX_STR = 256;
@@ -50,14 +51,9 @@ export function readAttributes(webglVendor: string | null, webglRenderer: string
 }
 
 /** Orientation-independent, so rotating a phone or tablet keeps the same reading. */
-export function screenKey(a: DeviceAttributes): string | null {
-  if (a.screenWidth === null || a.screenHeight === null) return null;
-  const long = Math.max(a.screenWidth, a.screenHeight);
-  const short = Math.min(a.screenWidth, a.screenHeight);
-  return `${long}x${short}|${a.colorDepth ?? ''}|${a.pixelRatio ?? ''}`;
-}
+export { screenKey } from '@trace-id/signals/integrity';
 
+/** The touch flag is read here; the key format lives in @trace-id/signals so the server can check it. */
 export function hardwareKey(a: DeviceAttributes): string {
-  const touch = safe(() => 'ontouchstart' in window, false);
-  return `${a.hardwareConcurrency ?? ''}|${a.deviceMemory ?? ''}|${a.maxTouchPoints ?? ''}|${touch}`;
+  return sharedHardwareKey(a, safe(() => 'ontouchstart' in window, false));
 }

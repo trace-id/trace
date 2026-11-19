@@ -1,4 +1,7 @@
-import { type ScoringConfig } from './config.js';
+import { derivedComponents } from './integrity.js';
+import { DEFAULT_ACCOUNTS_CONFIG, DEFAULT_FLAGGED_NETWORK_CONFIG, DEFAULT_RARE_DEVICE_CONFIG, type ScoringConfig } from './config.js';
+import { DEFAULT_CROSS_BROWSER_CONFIG } from './crossbrowser.js';
+import { DEFAULT_LINKAGE_CONFIG } from './linkage.js';
 import {
   type BotIndicators,
   type Components,
@@ -22,46 +25,43 @@ export const TEST_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
 /** A clean desktop Chrome payload; override only what a test cares about. */
+export const TEST_ATTRIBUTES: DeviceAttributes = {
+  screenWidth: 1920,
+  screenHeight: 1080,
+  availWidth: 1920,
+  availHeight: 1040,
+  colorDepth: 24,
+  pixelRatio: 1,
+  hardwareConcurrency: 8,
+  deviceMemory: 8,
+  maxTouchPoints: 0,
+  timezone: 'Europe/Berlin',
+  languages: ['en-US', 'en'],
+  platform: 'Win32',
+  userAgent: TEST_USER_AGENT,
+  uaBrands: [{ brand: 'Chromium', version: '130' }],
+  uaMobile: false,
+  uaPlatform: 'Windows',
+  webglVendor: 'Google Inc. (NVIDIA)',
+  webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)',
+};
+
 export function makePayload(overrides: PayloadOverrides = {}): SignalPayload {
   return {
     v: 1,
     components: overrides.components ?? {
       canvas: 'c1',
-      webgl: 'w1',
       webglParams: 'wp1',
       audio: 'a1',
       fonts: 'f1',
-      screen: 's1',
-      hardware: 'h1',
-      timezone: 'tz1',
-      languages: 'l1',
-      platform: 'p1',
       math: 'm1',
       css: 'css1',
       media: 'md1',
       userAgentFamily: 'ua1',
+      // Derived from the attributes the way the SDK does, so a default payload passes the integrity check.
+      ...derivedComponents({ ...TEST_ATTRIBUTES, ...overrides.attributes }),
     },
-    attributes: {
-      screenWidth: 1920,
-      screenHeight: 1080,
-      availWidth: 1920,
-      availHeight: 1040,
-      colorDepth: 24,
-      pixelRatio: 1,
-      hardwareConcurrency: 8,
-      deviceMemory: 8,
-      maxTouchPoints: 0,
-      timezone: 'Europe/Berlin',
-      languages: ['en-US', 'en'],
-      platform: 'Win32',
-      userAgent: TEST_USER_AGENT,
-      uaBrands: [{ brand: 'Chromium', version: '130' }],
-      uaMobile: false,
-      uaPlatform: 'Windows',
-      webglVendor: 'Google Inc. (NVIDIA)',
-      webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)',
-      ...overrides.attributes,
-    },
+    attributes: { ...TEST_ATTRIBUTES, ...overrides.attributes },
     bot: {
       webdriver: false,
       headlessUserAgent: false,
@@ -103,6 +103,7 @@ export const CLEAN_IP: IpInfo = {
 
 export function makeContext(overrides: Partial<EvaluationContext> = {}): EvaluationContext {
   return {
+    ...overrides,
     payload: overrides.payload ?? makePayload(),
     headers: overrides.headers ?? { userAgent: TEST_USER_AGENT, secChUa: null, secChUaPlatform: null },
     ip: overrides.ip ?? CLEAN_IP,
@@ -133,12 +134,25 @@ export const TEST_SCORING_CONFIG: ScoringConfig = {
       css: 0.5,
       media: 0.5,
       userAgentFamily: 2,
+      intl: 1,
+      textMetrics: 1.5,
+      webglRender: 2,
+      webgpu: 1.5,
+      apiSurface: 1,
+      systemStyle: 1,
+      codecs: 1,
+      webgl2: 1.5,
+      extensions: 0.5,
+      appInstall: 4,
     },
     buckets: [
       ['canvas', 'webgl', 'audio'],
       ['screen', 'hardware', 'timezone', 'platform'],
       ['fonts', 'webglParams', 'languages'],
+      ['appInstall'],
     ],
+    method: 'linkage',
+    linkage: DEFAULT_LINKAGE_CONFIG,
   },
   suspect: {
     weights: {
@@ -153,6 +167,21 @@ export const TEST_SCORING_CONFIG: ScoringConfig = {
       virtualMachine: 15,
       privacyBrowser: 5,
       highActivity: 15,
+      crossBrowser: 15,
+      antiDetect: 40,
+      vpn: 20,
+      tlsMismatch: 30,
+      multiAccount: 25,
+      accountSharing: 10,
+      automatedInput: 30,
+      aiAgent: 20,
+      proxy: 20,
+      rareDevice: 10,
+      tamperedRequest: 30,
+      replayedRequest: 50,
+      flaggedNetwork: 15,
+      emulator: 30,
+      rootedDevice: 20,
     },
   },
   velocity: {
@@ -161,5 +190,12 @@ export const TEST_SCORING_CONFIG: ScoringConfig = {
     visitorsPerIp1h: 20,
     ipsPerVisitor24h: 10,
     visitorsPerLinkedId24h: 5,
+    eventsPerVisitor5m: 20,
+    countriesPerVisitor24h: 2,
+    linkedIdsPerVisitor24h: 3,
   },
+  crossBrowser: DEFAULT_CROSS_BROWSER_CONFIG,
+  accounts: DEFAULT_ACCOUNTS_CONFIG,
+  rareDevice: DEFAULT_RARE_DEVICE_CONFIG,
+  flaggedNetwork: DEFAULT_FLAGGED_NETWORK_CONFIG,
 };

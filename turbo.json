@@ -8,8 +8,7 @@
       "outputs": [
         "dist/**",
         ".next/**",
-        "!.next/cache/**",
-        ".vitepress/dist/**"
+        "!.next/cache/**"
       ],
       "env": [
         "NEXT_TELEMETRY_DISABLED"

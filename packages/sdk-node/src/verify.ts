@@ -1,4 +1,4 @@
-import { type EventResponse } from '@tbdname/signals/api';
+import { type EventLabelResponse, type EventResponse } from '@trace-id/signals/api';
 import { VerifyError, type VerifyErrorCode } from './errors.js';
 
 export interface VerifyOptions {
@@ -17,7 +17,8 @@ function codeFor(status: number, serverCode: string | null): VerifyErrorCode {
   if (status === 404) return 'not_found';
   if (status === 410 || serverCode === 'event_expired') return 'expired';
   if (status === 429) return 'rate_limited';
-  if (status === 400) return 'invalid_event_id';
+  if (status === 400) return serverCode === 'invalid_label' ? 'invalid_label' : 'invalid_event_id';
+  if (status === 409) return 'limit_reached';
   return 'server_error';
 }
 
@@ -35,22 +36,22 @@ function isEventResponse(value: unknown): value is EventResponse {
   );
 }
 
-/**
- * Fetches the full, server-recorded event. This is the only result you should trust:
- * whatever the browser sends you (visitorId, score) can be forged.
- */
-export async function verifyEvent(eventId: string, options: VerifyOptions): Promise<EventResponse> {
-  if (!EVENT_ID.test(eventId)) {
-    throw new VerifyError('invalid_event_id', 'eventId is not a valid event id');
-  }
+/** One authenticated call to the server; maps failures to VerifyError. Returns the parsed body (null for 204). */
+async function request(method: 'GET' | 'PUT' | 'DELETE', path: string, options: VerifyOptions, body?: unknown): Promise<unknown> {
   if (!options.secretKey.startsWith('sk_')) {
     throw new VerifyError('unauthorized', 'secretKey must be a secret key (sk_...)');
   }
-  const url = `${options.endpoint.replace(/\/+$/, '')}/v1/events/${eventId}`;
+  const url = `${options.endpoint.replace(/\/+$/, '')}${path}`;
   let res: Response;
   try {
     res = await fetch(url, {
-      headers: { Authorization: `Bearer ${options.secretKey}`, Accept: 'application/json' },
+      method,
+      headers: {
+        Authorization: `Bearer ${options.secretKey}`,
+        Accept: 'application/json',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       signal: AbortSignal.timeout(options.timeoutMs ?? 2000),
       redirect: 'error',
     });
@@ -62,7 +63,7 @@ export async function verifyEvent(eventId: string, options: VerifyOptions): Prom
     throw new VerifyError('network', err instanceof Error ? err.message : 'Network error');
   }
 
-  const json: unknown = await res.json().catch(() => null);
+  const json: unknown = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) {
     const serverError = (json as { error?: { code?: unknown; message?: unknown } } | null)?.error;
     const serverCode = typeof serverError?.code === 'string' ? serverError.code : null;
@@ -74,8 +75,54 @@ export async function verifyEvent(eventId: string, options: VerifyOptions): Prom
       Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null,
     );
   }
+  return json;
+}
+
+function checkId(eventId: string): void {
+  if (!EVENT_ID.test(eventId)) {
+    throw new VerifyError('invalid_event_id', 'eventId is not a valid event id');
+  }
+}
+
+/**
+ * Fetches the full, server-recorded event. This is the only result you should trust:
+ * whatever the browser sends you (visitorId, score) can be forged.
+ */
+export async function verifyEvent(eventId: string, options: VerifyOptions): Promise<EventResponse> {
+  checkId(eventId);
+  const json = await request('GET', `/v1/events/${eventId}`, options);
   if (!isEventResponse(json)) {
-    throw new VerifyError('invalid_response', 'Unexpected response shape', res.status);
+    throw new VerifyError('invalid_response', 'Unexpected response shape');
   }
   return json;
+}
+
+const LABEL = /^[a-z][a-z0-9_]{0,31}$/;
+
+/**
+ * Records your verdict on an event for one fraud type (for example after a chargeback, or after a manual review that
+ * cleared it). Trace trains a model per type from these labels and adds `fraudScores` to new events. Calling it again
+ * replaces the verdict.
+ */
+export async function labelEvent(
+  eventId: string,
+  label: string,
+  fraud: boolean,
+  options: VerifyOptions,
+): Promise<EventLabelResponse> {
+  checkId(eventId);
+  if (!LABEL.test(label)) throw new VerifyError('invalid_label', 'label must match /^[a-z][a-z0-9_]{0,31}$/');
+  const json = await request('PUT', `/v1/events/${eventId}/labels/${label}`, options, { fraud });
+  const r = json as Partial<EventLabelResponse> | null;
+  if (r?.eventId !== eventId || r.label !== label || typeof r.fraud !== 'boolean') {
+    throw new VerifyError('invalid_response', 'Unexpected response shape');
+  }
+  return r as EventLabelResponse;
+}
+
+/** Removes a label. Throws `not_found` when the event has no label of that type. */
+export async function unlabelEvent(eventId: string, label: string, options: VerifyOptions): Promise<void> {
+  checkId(eventId);
+  if (!LABEL.test(label)) throw new VerifyError('invalid_label', 'label must match /^[a-z][a-z0-9_]{0,31}$/');
+  await request('DELETE', `/v1/events/${eventId}/labels/${label}`, options);
 }

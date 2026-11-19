@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { type WebhookPayload } from '@tbdname/signals/api';
+import { type WebhookPayload } from '@trace-id/signals/api';
 
 export type WebhookErrorCode =
   | 'missing_signature'

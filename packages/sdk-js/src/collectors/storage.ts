@@ -1,4 +1,4 @@
-import { type StorageAvailability } from '@tbdname/signals/types';
+import { type StorageAvailability } from '@trace-id/signals/types';
 import { safe, safeAsync } from './safe.js';
 
 const KEY = '_dvi_vt';

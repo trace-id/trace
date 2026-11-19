@@ -13,7 +13,8 @@ describe('componentSimilarity', () => {
   it('drops by the weight share of differing components', () => {
     const a = makePayload().components;
     const b = { ...a, timezone: 'tz2' };
-    const total = Object.values(cfg.componentWeights).reduce((s, w) => s + w, 0);
+    // Only components both sides report count; the payload has no values for the later additions (intl, webgpu...).
+    const total = Object.keys(a).reduce((s, k) => s + (cfg.componentWeights[k as keyof typeof a] ?? 0), 0);
     expect(componentSimilarity(a, b, cfg)).toBeCloseTo((total - 1) / total, 10);
   });
 

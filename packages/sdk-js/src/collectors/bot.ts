@@ -1,4 +1,4 @@
-import { type BotIndicators } from '@tbdname/signals/types';
+import { type BotIndicators } from '@trace-id/signals/types';
 import { safe, safeAsync } from './safe.js';
 import { browserFamily } from './ua.js';
 

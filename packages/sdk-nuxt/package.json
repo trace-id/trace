@@ -1,0 +1,47 @@
+{
+  "name": "@trace-id/sdk-nuxt",
+  "version": "0.1.0",
+  "description": "Nuxt 3/4 module for Trace: a client-only plugin and the useVisitorData() composable, auto-imported.",
+  "license": "MIT",
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "fraud",
+    "device-identification",
+    "trace"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "default": "./dist/module.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^3.13.0",
+    "@trace-id/sdk-vue": "0.1.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.13.0 || ^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "peerDependenciesMeta": {
+    "nuxt": {
+      "optional": true
+    }
+  }
+}

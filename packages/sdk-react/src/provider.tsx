@@ -1,5 +1,5 @@
-import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@tbdname/sdk-js';
-import { IdentifyError } from '@tbdname/sdk-js/errors';
+import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
+import { IdentifyError } from '@trace-id/sdk-js/errors';
 import {
   createContext,
   useCallback,

@@ -1,11 +1,10 @@
 {
-  "name": "tbdname",
+  "name": "trace",
   "private": true,
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*",
-    "docs"
+    "apps/*"
   ],
   "packageManager": "npm@10.9.8",
   "engines": {
@@ -16,9 +15,7 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "accuracy": "npm run accuracy -w tbdname-server",
-    "demo": "node examples/demo/serve.mjs",
-    "docs:dev": "npm run dev -w tbdname-docs"
+    "accuracy": "npm run accuracy -w trace-server"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
@@ -31,6 +28,7 @@
     "vitest": "4.1.12"
   },
   "overrides": {
-    "fastify": "5.12.7"
+    "fastify": "5.12.7",
+    "next": "16.4.6"
   }
 }

@@ -1,0 +1,45 @@
+{
+  "name": "@trace-id/ip-intel",
+  "version": "0.1.0",
+  "description": "IP intelligence for Trace: combine local lists and databases with IP data providers (ipinfo, IPQualityScore, MaxMind, Spur and more), with timeouts and caching.",
+  "license": "MIT",
+  "keywords": [
+    "ip",
+    "geolocation",
+    "vpn-detection",
+    "proxy-detection",
+    "trace"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./download": {
+      "types": "./dist/download.d.ts",
+      "default": "./dist/download.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trace-id/signals": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
