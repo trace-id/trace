@@ -30,7 +30,7 @@
     "@trace-id/sdk-js": "0.1.0",
     "@trace-id/sdk-node": "0.1.0",
     "@trace-id/signals": "0.1.0",
-    "better-auth": "1.7.14",
+    "better-auth": "1.7.25",
     "fastify": "5.12.7",
     "ioredis": "5.11.1",
     "mmdb-lib": "3.0.3",
