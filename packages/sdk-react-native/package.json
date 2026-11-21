@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-react-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React Native and Expo SDK: device identification and app fraud signals (emulator, root/jailbreak) with <IdentifyProvider> and useVisitorData().",
   "license": "MIT",
   "keywords": [
@@ -36,8 +36,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-js": "0.1.0",
-    "@trace-id/signals": "0.1.0"
+    "@trace-id/sdk-js": "0.1.1",
+    "@trace-id/signals": "0.1.1"
   },
   "peerDependencies": {
     "expo-application": ">=6.0.0",

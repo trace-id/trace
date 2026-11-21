@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-vue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Vue 3 bindings for Trace: createIdentify() plugin and useVisitorData() composable.",
   "license": "MIT",
   "keywords": [
@@ -30,13 +30,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-js": "0.1.0"
+    "@trace-id/sdk-js": "0.1.1"
   },
   "peerDependencies": {
     "vue": "^3.3.0"
   },
   "devDependencies": {
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/signals": "0.1.1",
     "happy-dom": "21.0.4",
     "vue": "3.5.45"
   },

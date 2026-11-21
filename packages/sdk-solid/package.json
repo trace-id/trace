@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-solid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SolidJS bindings for Trace: <IdentifyProvider> and createVisitorData().",
   "license": "MIT",
   "keywords": [
@@ -31,13 +31,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-js": "0.1.0"
+    "@trace-id/sdk-js": "0.1.1"
   },
   "peerDependencies": {
     "solid-js": "^1.8.0"
   },
   "devDependencies": {
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/signals": "0.1.1",
     "happy-dom": "21.0.4",
     "solid-js": "1.9.19"
   },

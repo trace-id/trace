@@ -2,7 +2,7 @@
 
 All notable changes to Trace. Versions follow [semantic versioning](https://semver.org); while the major version is 0, minor versions may change behaviour.
 
-## Unreleased
+## 0.1.1 (2026-11-21)
 
 ### Added
 

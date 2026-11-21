@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Server helper: verify identification events with your secret key.",
   "license": "MIT",
   "keywords": [
@@ -68,7 +68,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/signals": "0.1.0"
+    "@trace-id/signals": "0.1.1"
   },
   "publishConfig": {
     "access": "public",

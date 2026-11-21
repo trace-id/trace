@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/proxy-edge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "First-party proxy for Trace on Netlify Edge, Vercel Edge and Fastly Compute: forwards the real client IP and JA4, fixes the cookie path.",
   "license": "MIT",
   "keywords": [

@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-next",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Next.js integration for Trace: a client provider for the App Router and a guard for route handlers and server actions.",
   "license": "MIT",
   "keywords": [
@@ -34,8 +34,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-node": "0.1.0",
-    "@trace-id/sdk-react": "0.1.0"
+    "@trace-id/sdk-node": "0.1.1",
+    "@trace-id/sdk-react": "0.1.1"
   },
   "peerDependencies": {
     "next": ">=14.0.0",
@@ -47,7 +47,7 @@
     }
   },
   "devDependencies": {
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/signals": "0.1.1",
     "@types/react": "19.3.0",
     "react": "19.3.1"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser SDK: collects device signals and calls the identify endpoint.",
   "license": "MIT",
   "keywords": [
@@ -42,7 +42,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/signals": "0.1.0"
+    "@trace-id/signals": "0.1.1"
   },
   "devDependencies": {
     "happy-dom": "21.0.4",

@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/ip-intel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "IP intelligence for Trace: combine local lists and databases with IP data providers (ipinfo, IPQualityScore, MaxMind, Spur and more), with timeouts and caching.",
   "license": "MIT",
   "keywords": [
@@ -34,7 +34,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/signals": "0.1.0"
+    "@trace-id/signals": "0.1.1"
   },
   "devDependencies": {
     "@types/node": "22.20.5"

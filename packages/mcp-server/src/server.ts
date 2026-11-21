@@ -8,7 +8,7 @@ import { explainEvent } from './explain.js';
  */
 
 export const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'] as const;
-export const SERVER_INFO = { name: 'trace', title: 'Trace device intelligence', version: '0.1.0' };
+export const SERVER_INFO = { name: 'trace', title: 'Trace device intelligence', version: '0.1.1' };
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';

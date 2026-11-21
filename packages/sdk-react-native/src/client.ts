@@ -80,7 +80,7 @@ export class Client {
     const started = now();
     const persist = this.options.persistToken !== false;
     const [readings, token] = await Promise.all([this.deps.readings(), persist && this.deps.store ? this.deps.store.get().catch(() => null) : null]);
-    const body: IdentifyRequest = { signals: buildPayload(readings, now() - started), sdk: { name: '@trace-id/sdk-react-native', version: '0.1.0' } };
+    const body: IdentifyRequest = { signals: buildPayload(readings, now() - started), sdk: { name: '@trace-id/sdk-react-native', version: '0.1.1' } };
     if (token) body.token = token;
     if (opts.linkedId !== undefined) body.linkedId = opts.linkedId;
     if (opts.tags !== undefined) body.tags = opts.tags;

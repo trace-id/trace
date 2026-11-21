@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/proxy-cloudflare",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cloudflare Worker that serves Trace from your own domain (first-party mode), with real client IPs and JA4.",
   "license": "MIT",
   "keywords": [

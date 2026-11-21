@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-nuxt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Nuxt 3/4 module for Trace: a client-only plugin and the useVisitorData() composable, auto-imported.",
   "license": "MIT",
   "keywords": [
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^3.13.0",
-    "@trace-id/sdk-vue": "0.1.0"
+    "@trace-id/sdk-vue": "0.1.1"
   },
   "peerDependencies": {
     "nuxt": "^3.13.0 || ^4.0.0"

@@ -9,6 +9,6 @@ export default defineNuxtPlugin((nuxtApp: { vueApp: { use: (plugin: unknown) => 
     return;
   }
   // Reported with every event; the version must equal package.json (a test in sdk-js checks).
-  const via = { name: '@trace-id/sdk-nuxt', version: '0.1.0' };
+  const via = { name: '@trace-id/sdk-nuxt', version: '0.1.1' };
   nuxtApp.vueApp.use(createIdentify({ apiKey: traceKey, endpoint: traceEndpoint, via }));
 });

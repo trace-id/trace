@@ -1,6 +1,6 @@
 {
   "name": "trace-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Ingest, identification, verification API.",
   "license": "AGPL-3.0-only",
@@ -25,11 +25,11 @@
     "@nestjs/platform-fastify": "11.2.8",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@trace-id/embed": "0.1.0",
-    "@trace-id/ip-intel": "0.1.0",
-    "@trace-id/sdk-js": "0.1.0",
-    "@trace-id/sdk-node": "0.1.0",
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/embed": "0.1.1",
+    "@trace-id/ip-intel": "0.1.1",
+    "@trace-id/sdk-js": "0.1.1",
+    "@trace-id/sdk-node": "0.1.1",
+    "@trace-id/signals": "0.1.1",
     "better-auth": "1.7.14",
     "fastify": "5.12.7",
     "ioredis": "5.11.1",
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@nestjs/testing": "11.2.8",
     "@swc/core": "1.13.21",
-    "@trace-id/sdk-react-native": "0.1.0",
+    "@trace-id/sdk-react-native": "0.1.1",
     "@types/pg": "8.23.1",
     "tsx": "4.23.15",
     "unplugin-swc": "1.6.0"

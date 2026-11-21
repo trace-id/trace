@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-svelte",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Svelte store for Trace: createVisitorData(). No Svelte import, so it also works with Angular's async pipe or Solid.",
   "license": "MIT",
   "keywords": [
@@ -31,10 +31,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-js": "0.1.0"
+    "@trace-id/sdk-js": "0.1.1"
   },
   "devDependencies": {
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/signals": "0.1.1",
     "happy-dom": "21.0.4"
   },
   "publishConfig": {

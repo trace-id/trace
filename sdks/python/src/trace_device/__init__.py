@@ -21,7 +21,7 @@ __all__ = [
     "WebhookVerificationError",
     "SealedResultError",
 ]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 Event = Dict[str, Any]
 _LABEL = re.compile(r"^[a-z][a-z0-9_]{0,31}$")

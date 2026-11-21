@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol server for Trace: let AI agents look up events, explain verdicts and investigate devices.",
   "license": "MIT",
   "keywords": [
@@ -32,7 +32,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/signals": "0.1.0"
+    "@trace-id/signals": "0.1.1"
   },
   "engines": {
     "node": ">=18.17"

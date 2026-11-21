@@ -1,6 +1,6 @@
 {
   "name": "@trace-id/sdk-angular",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Angular bindings for Trace: provideTrace() and injectVisitorData() with signals.",
   "license": "MIT",
   "keywords": [
@@ -30,14 +30,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@trace-id/sdk-js": "0.1.0"
+    "@trace-id/sdk-js": "0.1.1"
   },
   "peerDependencies": {
     "@angular/core": ">=17.0.0"
   },
   "devDependencies": {
     "@angular/core": "21.2.26",
-    "@trace-id/signals": "0.1.0",
+    "@trace-id/signals": "0.1.1",
     "rxjs": "7.8.2",
     "happy-dom": "21.0.4"
   },
