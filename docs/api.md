@@ -29,7 +29,8 @@ Request (all objects reject unknown fields; body capped at 64 KB):
   "token": "v1....",
   "linkedId": "your-user-id",
   "tags": { "page": "signup" },
-  "sdk": { "name": "@trace-id/sdk-js", "version": "0.1.0" }
+  "sdk": { "name": "@trace-id/sdk-js", "version": "0.1.0" },
+  "via": { "name": "@trace-id/sdk-react", "version": "0.1.0" }
 }
 ```
 
@@ -38,6 +39,8 @@ Response:
 ```json
 { "eventId": "0192f0c4-...", "visitorId": "Vx3...", "deviceId": "Vx3...", "confidence": 0.97, "suspectScore": 5, "token": "v1...." }
 ```
+
+`sdk` is the engine that collected the signals. `via` is optional and names the framework package the page used (`@trace-id/sdk-react`, `sdk-next`, `sdk-vue`, `sdk-nuxt`, `sdk-svelte`, `sdk-angular`, `sdk-solid`); older SDKs omit it. The verified event returns both as `client: { sdk, via? }`, and the dashboard shows them under Integrations, Clients.
 
 `visitorId` identifies the browser. `deviceId` is shared by every browser on the device: it is the `visitorId` of the first-seen browser among this one and its strong links (confidence at least `crossBrowser.signalThreshold`, 0.8). It equals `visitorId` until a link is made, and does not change when links later weaken. Identical machines on one network can be wrongly linked and then share a `deviceId`; the event's `linkedVisitors` shows each link with its confidence.
 

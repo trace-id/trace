@@ -22,6 +22,11 @@ export interface LookupContext {
  */
 export interface IpIntelSource {
   name: string;
+  /**
+   * Stable id for caching, usage and the dashboard. Defaults to `name`. Two sources of the same provider with
+   * different settings need different refs, so their answers are cached apart.
+   */
+  ref?: string;
   remote: boolean;
   lookup(ip: string, ctx: LookupContext): IpFacts | Promise<IpFacts>;
 }
@@ -29,4 +34,29 @@ export interface IpIntelSource {
 export interface FetchOptions {
   /** Defaults to the global fetch. Tests pass a stub. */
   fetch?: typeof fetch;
+}
+
+/**
+ * A cache shared between processes (Redis, for example). Keys are opaque strings; a value is one source's answer for
+ * one IP. Implementations must fail soft: a broken store reads as a miss and a failed write is dropped.
+ */
+export interface IpCacheStore {
+  get(key: string): Promise<IpFacts | null>;
+  set(key: string, facts: IpFacts, ttlMs: number): Promise<void>;
+}
+
+/** Counters since the lookup chain was built. */
+export interface IpIntelStats {
+  /** Lookups answered, local and remote. */
+  lookups: number;
+  /** Remote answers served from this process's memory. */
+  memoryHits: number;
+  /** Remote answers served from the shared store. */
+  sharedHits: number;
+  /** Calls made to providers (cache misses). */
+  providerCalls: number;
+  /** Provider calls that failed or timed out. */
+  failures: number;
+  /** Addresses never sent to a provider (private, loopback, reserved). */
+  skippedPrivate: number;
 }

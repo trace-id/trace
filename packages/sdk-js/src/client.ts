@@ -25,6 +25,11 @@ export interface ClientOptions {
   enabled?: boolean;
   /** Replaces signal collection; for tests. */
   collector?: () => Promise<SignalPayload>;
+  /**
+   * Set by the framework packages (@trace-id/sdk-react, sdk-vue and so on) so the dashboard can show which package an
+   * event came from. Leave it unset when you use this package directly.
+   */
+  via?: { name: string; version: string };
 }
 
 export interface GetOptions {
@@ -58,7 +63,7 @@ function isIdentifyResponse(value: unknown): value is IdentifyResponse {
 }
 
 export class Client {
-  private readonly options: Required<Omit<ClientOptions, 'collector'>> & Pick<ClientOptions, 'collector'>;
+  private readonly options: Required<Omit<ClientOptions, 'collector' | 'via'>> & Pick<ClientOptions, 'collector' | 'via'>;
   private enabled: boolean;
   private behavior: BehaviorRecorder | null = null;
 
@@ -131,6 +136,7 @@ export class Client {
       this.options.persistToken ? loadToken(STORAGE_TIMEOUT_MS) : Promise.resolve(null),
     ]);
     const body: IdentifyRequest = { signals, sdk: { name: SDK_NAME, version: SDK_VERSION } };
+    if (this.options.via) body.via = this.options.via;
     if (token) body.token = token;
     if (opts.linkedId !== undefined) body.linkedId = opts.linkedId;
     if (opts.tags !== undefined) body.tags = opts.tags;

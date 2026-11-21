@@ -1,5 +1,6 @@
 import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 import { IdentifyError } from '@trace-id/sdk-js/errors';
+import { VIA } from './via.js';
 
 export { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 export { IdentifyError } from '@trace-id/sdk-js/errors';
@@ -36,7 +37,7 @@ function toIdentifyError(err: unknown): IdentifyError {
  * `data.eventId` to your backend and verify it there.
  */
 export function createVisitorData(options: ClientOptions | Client, defaults: VisitorDataOptions = {}): VisitorDataStore {
-  const client = options instanceof Client ? options : new Client(options);
+  const client = options instanceof Client ? options : new Client({ ...options, via: options.via ?? VIA });
   const { immediate = true, ...getDefaults } = defaults;
   let state: VisitorDataState = { data: null, error: null, isLoading: immediate && typeof window !== 'undefined' };
   const subscribers = new Set<(s: VisitorDataState) => void>();

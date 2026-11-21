@@ -20,7 +20,7 @@ All configuration is through environment variables, validated at startup. Invali
 | `DASHBOARD_ALLOW_SIGNUP` | `false` | Allow sign-ups after the first account. |
 | `TRUST_PROXY` | `false` | `false`, `true`, or a comma list of proxy IPs/CIDRs. |
 | `REQUEST_TIMEOUT_MS` | `10000` | Per-request timeout. |
-| `REDIS_URL` | unset | Redis for rate limits and velocity. Optional. |
+| `REDIS_URL` | unset | Redis for rate limits, velocity signals and the shared IP cache. Optional. An address saved in the dashboard (Integrations, Redis) wins and applies without a restart. |
 | `DB_STATEMENT_TIMEOUT_MS` | `5000` | Postgres statement timeout per connection. |
 | `DB_POOL_MAX` | `10` | Postgres connections per server process. |
 
@@ -69,6 +69,21 @@ Name providers in `IP_PROVIDERS` (comma separated, highest priority first) and s
 | `IP_PROVIDERS` | unset | e.g. `ipqualityscore,ipinfo`. Unknown names or missing keys stop the server at startup with the variable named. |
 | `IP_PROVIDER_TIMEOUT_MS` | `400` | Budget for all provider lookups of one identify. |
 | `IP_PROVIDER_CACHE_HOURS` | `24` | How long an answer for an IP is reused. `0` turns caching off. |
+
+#### Managing providers in the dashboard
+
+The first account (the administrator) can set providers up under **Integrations, IP intelligence**, with no restart. They apply to the whole server, because each provider receives visitor IPs for every project.
+
+- **Several providers and several keys per provider.** Pick a provider from the list, paste a key, press **Test first** to send one real lookup, then save. A provider with more than one key either **spreads** calls over its keys by weight or uses them in **failover** order. A key that is rate limited (HTTP 429 or 402) is skipped for a minute, one that is rejected (401 or 403) for ten minutes, and the next key takes over meanwhile.
+- **Limits and traffic split.** Set a daily limit per key and per provider, and a share of addresses (for example 50%) to send to a provider, which spreads one small quota over two providers. The same address always goes the same way. **Priority** (lower first) decides which provider wins for country, ASN and location.
+- **Usage.** Calls, successes, failures, rate limits and average time per day, per provider and per key, kept for 90 days. A provider's status says when no key can be used and why.
+- **Keys are stored encrypted** with a key derived from `TOKEN_SECRET` and are never returned by the API or shown again, only a masked tail. Rotating `TOKEN_SECRET` makes them unreadable: add them again.
+- **Environment variables keep working.** Providers named in `IP_PROVIDERS` run first, are counted in the usage figures and show as read-only. The time budget, the cache time and the shared cache switch are also editable there and override `IP_PROVIDER_TIMEOUT_MS` and `IP_PROVIDER_CACHE_HOURS`.
+- Every provider in the table below is available. A new one needs only an adapter in `@trace-id/ip-intel` and one entry in its registry; the form, the key pool and the usage counters follow from that entry.
+
+#### Cache
+
+Each provider's answer for an address is cached on its own, so adding a provider never repeats the calls to the others, and an address is sent to a given provider once per cache time. "Nothing known" answers are cached too; failed or timed-out calls are not. Private and reserved addresses are never sent. With Redis the cache is also shared between server instances and survives restarts; Redis only ever sees a keyed hash of the address, never the address. The dashboard shows how many answers came from memory, from Redis and from the provider.
 
 | `IP_PROVIDERS` name | Variables | Fills |
 | --- | --- | --- |

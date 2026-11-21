@@ -1,5 +1,6 @@
 import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 import { IdentifyError } from '@trace-id/sdk-js/errors';
+import { VIA } from './via.js';
 import {
   type Accessor,
   type Component,
@@ -28,7 +29,7 @@ export type IdentifyProviderProps = ClientOptions & { children?: JSX.Element };
 export const IdentifyProvider: Component<IdentifyProviderProps> = (props) => {
   // splitProps keeps `children` lazy: spreading props would render the subtree before the context exists.
   const [, options] = splitProps(props, ['children']);
-  const client = new Client(untrack(() => ({ ...options })));
+  const client = new Client(untrack(() => ({ ...options, via: options.via ?? VIA })));
   return createComponent(ClientContext.Provider, {
     value: client,
     get children() {

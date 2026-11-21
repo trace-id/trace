@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 import { IdentifyError } from '@trace-id/sdk-js/errors';
+import { VIA } from './via.js';
 
 export { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 export { IdentifyError } from '@trace-id/sdk-js/errors';
@@ -21,7 +22,7 @@ const CLIENT = new InjectionToken<Client>('TRACE_CLIENT');
  * Options are read once.
  */
 export function provideTrace(options: ClientOptions): EnvironmentProviders {
-  return makeEnvironmentProviders([{ provide: CLIENT, useFactory: () => new Client(options) }]);
+  return makeEnvironmentProviders([{ provide: CLIENT, useFactory: () => new Client({ ...options, via: options.via ?? VIA }) }]);
 }
 
 /** The underlying client, for consent toggles (`enable()`, `disable(true)`). Call in an injection context. */

@@ -126,6 +126,14 @@ describe.skipIf(!DATABASE_URL)('API end to end (Postgres)', () => {
     expect(event.signals.bot.detected).toBe(false);
   });
 
+  it('records which client package sent the event, and stays valid for older SDKs without it', async () => {
+    const via = { name: '@trace-id/sdk-react', version: '0.1.0' };
+    const withVia = (await identify({ ...request(), via })).json<IdentifyResponse>();
+    expect((await verify(withVia.eventId)).json<EventResponse>().client).toEqual({ sdk: { name: '@trace-id/sdk-js', version: '0.1.0' }, via });
+    const plain = (await identify(request())).json<IdentifyResponse>();
+    expect((await verify(plain.eventId)).json<EventResponse>().client).toEqual({ sdk: { name: '@trace-id/sdk-js', version: '0.1.0' } });
+  });
+
   it('matches the same device in a private window (no token) and with its token', async () => {
     const first = (await identify(request(undefined, { ...DEVICE, canvas: hex('c2') }))).json<IdentifyResponse>();
     const incognito = (await identify(request(undefined, { ...DEVICE, canvas: hex('c2') }))).json<IdentifyResponse>();

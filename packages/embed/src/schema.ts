@@ -141,6 +141,7 @@ export const identifyRequestSchema = z
       .optional(),
     linkedId: z.string().min(1).max(256).regex(/^[\x20-\x7e]+$/).optional(),
     sdk: z.object({ name: str(64), version: str(32) }).strict(),
+    via: z.object({ name: str(64), version: str(32) }).strict().optional(),
     sentAt: z.number().int().min(0).max(1e13).optional(),
     nonce: z.string().regex(/^[0-9a-f]{32}$/).optional(),
   })

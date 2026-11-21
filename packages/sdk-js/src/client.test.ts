@@ -47,6 +47,16 @@ describe('Client', () => {
     expect(body.nonce).toMatch(/^[0-9a-f]{32}$/);
   });
 
+  it('names the framework package it was wrapped by, and sends nothing extra when there is none', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, OK_BODY)));
+    vi.stubGlobal('fetch', fetchMock);
+    await client().get();
+    await client({ via: { name: '@trace-id/sdk-react', version: '0.1.0' } }).get();
+    const bodies = fetchMock.mock.calls.map((c) => JSON.parse(((c as unknown as [string, RequestInit])[1].body as string)) as { sdk: { name: string }; via?: unknown });
+    expect(bodies[0]).not.toHaveProperty('via');
+    expect(bodies[1]).toMatchObject({ sdk: { name: '@trace-id/sdk-js' }, via: { name: '@trace-id/sdk-react', version: '0.1.0' } });
+  });
+
   it('sends credentials in first-party cookie mode, and asks the server to drop the cookie on disable', async () => {
     const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, OK_BODY)));
     vi.stubGlobal('fetch', fetchMock);

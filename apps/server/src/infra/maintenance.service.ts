@@ -67,6 +67,10 @@ export class MaintenanceService implements OnApplicationBootstrap, OnModuleDestr
       this.logger.log(`component stats: projects=${stats.projects} rows=${stats.rows}`);
       const nonces = await this.prisma.requestNonce.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 24 * 3_600_000) } } });
       this.logger.log(`request nonces purged: ${nonces.count}`);
+      const ipUsage = await this.prisma.ipProviderUsage.deleteMany({ where: { day: { lt: new Date(Date.now() - 90 * 86_400_000) } } });
+      this.logger.log(`ip provider usage purged: ${ipUsage.count}`);
+      const alertHistory = await this.prisma.alertEvent.deleteMany({ where: { firedAt: { lt: new Date(Date.now() - 90 * 86_400_000) } } });
+      this.logger.log(`alert history purged: ${alertHistory.count}`);
       const fraud = await this.fraud.trainStale();
       this.logger.log(`fraud models: trained=${fraud.trained}`);
     } catch (err) {

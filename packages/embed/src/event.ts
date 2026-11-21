@@ -13,6 +13,8 @@ export interface StoredSignals {
   components: Components;
   attributes: EventResponse['attributes'] & Pick<DeviceAttributes, 'webglRenderer'>;
   sdk: { name: string; version: string };
+  /** The framework package that wrapped the SDK, when there was one. */
+  via?: { name: string; version: string };
   collectMs: number;
   linkedVisitors?: LinkedVisitor[];
   /** The linkedId's history before this event (fraud score features); absent without a linkedId. */

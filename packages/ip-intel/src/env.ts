@@ -1,18 +1,4 @@
-import {
-  abuseipdb,
-  cdnHeaders,
-  ip2locationIo,
-  ipApi,
-  ipapiIs,
-  ipdata,
-  ipgeolocation,
-  ipinfo,
-  ipqualityscore,
-  ipregistry,
-  maxmind,
-  proxycheck,
-  spur,
-} from './providers.js';
+import { descriptor, type ProviderDescriptor, providerIds, REGISTRY } from './registry.js';
 import { type FetchOptions, type IpIntelSource } from './types.js';
 
 type Env = Record<string, string | undefined>;
@@ -24,56 +10,28 @@ interface ProviderSpec {
   build(env: Env, o: FetchOptions): IpIntelSource;
 }
 
-const need = (env: Env, name: string): string => {
-  const v = env[name]?.trim();
-  if (!v) throw new Error(`missing ${name}`);
-  return v;
-};
+/** Builds one provider from environment variables. Throws naming the missing variable. */
+export function buildFromEnv(d: ProviderDescriptor, env: Env, o: FetchOptions = {}): IpIntelSource {
+  const values: Record<string, string> = {};
+  for (const f of d.fields) {
+    const v = env[f.env]?.trim();
+    if (v) values[f.name] = v;
+    else if (f.required) throw new Error(`missing ${f.env}`);
+  }
+  return d.build(values, o);
+}
 
-/** Every provider Trace can use, by the name used in IP_PROVIDERS. */
-export const PROVIDERS: Readonly<Record<string, ProviderSpec>> = {
-  ipinfo: {
-    required: ['IPINFO_TOKEN'],
-    optional: ['IPINFO_PLAN'],
-    build: (e, o) => ipinfo({ ...o, token: need(e, 'IPINFO_TOKEN'), plan: e.IPINFO_PLAN === 'lite' ? 'lite' : 'core' }),
-  },
-  ipqualityscore: {
-    required: ['IPQS_KEY'],
-    optional: ['IPQS_STRICTNESS'],
-    build: (e, o) => ipqualityscore({ ...o, key: need(e, 'IPQS_KEY'), strictness: (Number(e.IPQS_STRICTNESS ?? 1) as 0 | 1 | 2 | 3) || 0 }),
-  },
-  maxmind: {
-    required: ['MAXMIND_ACCOUNT_ID', 'MAXMIND_LICENSE_KEY'],
-    optional: ['MAXMIND_SERVICE'],
-    build: (e, o) => {
-      const service = e.MAXMIND_SERVICE ?? 'insights';
-      if (!['country', 'city', 'insights'].includes(service)) throw new Error('MAXMIND_SERVICE must be country, city or insights');
-      return maxmind({ ...o, accountId: need(e, 'MAXMIND_ACCOUNT_ID'), licenseKey: need(e, 'MAXMIND_LICENSE_KEY'), service: service as 'country' | 'city' | 'insights' });
-    },
-  },
-  ipdata: { required: ['IPDATA_KEY'], optional: [], build: (e, o) => ipdata({ ...o, key: need(e, 'IPDATA_KEY') }) },
-  'ipapi.is': { required: ['IPAPI_IS_KEY'], optional: [], build: (e, o) => ipapiIs({ ...o, key: need(e, 'IPAPI_IS_KEY') }) },
-  'ip2location.io': { required: ['IP2LOCATION_IO_KEY'], optional: [], build: (e, o) => ip2locationIo({ ...o, key: need(e, 'IP2LOCATION_IO_KEY') }) },
-  ipregistry: { required: ['IPREGISTRY_KEY'], optional: [], build: (e, o) => ipregistry({ ...o, key: need(e, 'IPREGISTRY_KEY') }) },
-  proxycheck: { required: [], optional: ['PROXYCHECK_KEY'], build: (e, o) => proxycheck({ ...o, ...(e.PROXYCHECK_KEY ? { key: e.PROXYCHECK_KEY } : {}) }) },
-  spur: { required: ['SPUR_TOKEN'], optional: [], build: (e, o) => spur({ ...o, token: need(e, 'SPUR_TOKEN') }) },
-  abuseipdb: {
-    required: ['ABUSEIPDB_KEY'],
-    optional: ['ABUSEIPDB_MIN_SCORE'],
-    build: (e, o) => abuseipdb({ ...o, key: need(e, 'ABUSEIPDB_KEY'), minScore: Number(e.ABUSEIPDB_MIN_SCORE ?? 75) }),
-  },
-  ipgeolocation: {
-    required: ['IPGEOLOCATION_KEY'],
-    optional: ['IPGEOLOCATION_SECURITY'],
-    build: (e, o) => ipgeolocation({ ...o, key: need(e, 'IPGEOLOCATION_KEY'), security: e.IPGEOLOCATION_SECURITY === 'true' }),
-  },
-  'ip-api': {
-    required: [],
-    optional: ['IP_API_KEY', 'IP_API_ALLOW_FREE_HTTP'],
-    build: (e, o) => ipApi({ ...o, ...(e.IP_API_KEY ? { key: e.IP_API_KEY } : {}), allowFreeHttp: e.IP_API_ALLOW_FREE_HTTP === 'true' }),
-  },
-  'cdn-headers': { required: ['IP_COUNTRY_HEADER'], optional: [], build: (e) => cdnHeaders({ countryHeader: need(e, 'IP_COUNTRY_HEADER') }) },
-};
+/** Every provider Trace can use, by the name used in IP_PROVIDERS. Derived from the registry. */
+export const PROVIDERS: Readonly<Record<string, ProviderSpec>> = Object.fromEntries(
+  REGISTRY.map((d) => [
+    d.id,
+    {
+      required: d.fields.filter((f) => f.required).map((f) => f.env),
+      optional: d.fields.filter((f) => !f.required).map((f) => f.env),
+      build: (env: Env, o: FetchOptions) => buildFromEnv(d, env, o),
+    } satisfies ProviderSpec,
+  ]),
+);
 
 /**
  * Sources from IP_PROVIDERS (comma separated, in priority order) and each provider's variables. Throws naming the
@@ -85,10 +43,10 @@ export function providersFromEnv(env: Env, o: FetchOptions = {}): IpIntelSource[
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   return names.map((name) => {
-    const spec = PROVIDERS[name];
-    if (!spec) throw new Error(`IP_PROVIDERS: unknown provider "${name}" (known: ${Object.keys(PROVIDERS).join(', ')})`);
+    const d = descriptor(name);
+    if (!d) throw new Error(`IP_PROVIDERS: unknown provider "${name}" (known: ${providerIds().join(', ')})`);
     try {
-      return spec.build(env, o);
+      return buildFromEnv(d, env, o);
     } catch (err) {
       throw new Error(`IP_PROVIDERS: ${name}: ${err instanceof Error ? err.message : String(err)}`);
     }

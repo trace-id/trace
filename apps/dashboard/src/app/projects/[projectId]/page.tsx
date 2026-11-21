@@ -14,6 +14,7 @@ import { Badge, Button, Card, CardHeader, EmptyState, ErrorBanner, PageHeader, S
 import { cn } from '@/lib/cn';
 import { countryName } from '@/lib/country';
 import { compact, delta, num, pct, shortDay } from '@/lib/format';
+import { clientLabel } from '@/lib/clients';
 import { RANGES, useProject } from '@/lib/project-context';
 import { signalTitle } from '@/lib/signals';
 import { useApi } from '@/lib/use-api';
@@ -274,13 +275,13 @@ export default function OverviewPage() {
                     <TabsTrigger value="browsers">Browsers</TabsTrigger>
                     <TabsTrigger value="os">OS</TabsTrigger>
                     <TabsTrigger value="types">Types</TabsTrigger>
-                    <TabsTrigger value="sdks">SDKs</TabsTrigger>
+                    <TabsTrigger value="sdks">Clients</TabsTrigger>
                   </TabsList>
                 </div>
                 <TabsContent value="browsers" className="mt-2"><BarList color="var(--info)" rows={rows(d?.browsers ?? [], (k) => <BrowserLabel name={k} />)} /></TabsContent>
                 <TabsContent value="os" className="mt-2"><BarList color="var(--info)" rows={rows(d?.os ?? [], (k) => <OsLabel name={k} />)} /></TabsContent>
                 <TabsContent value="types" className="mt-2"><BarList color="var(--info)" rows={rows(d?.deviceTypes ?? [], (k) => <TypeLabel name={k} />)} /></TabsContent>
-                <TabsContent value="sdks" className="mt-2"><BarList color="var(--ink-3)" rows={(d?.sdks ?? []).map((s) => ({ key: s.key, label: s.key, value: s.events }))} /></TabsContent>
+                <TabsContent value="sdks" className="mt-2"><BarList color="var(--ink-3)" rows={(d?.sdks ?? []).map((s) => ({ key: s.key, label: clientLabel(s.key), value: s.events }))} /></TabsContent>
               </Tabs>
             </Card>
           </div>

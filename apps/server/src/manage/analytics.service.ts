@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import {
   type AnalyticsResponse,
+  type ClientsResponse,
   type AnalyticsTotals,
   type CountRow,
   type LinkedIdListResponse,
@@ -65,6 +66,43 @@ export class AnalyticsService {
 
   private async countRows(rows: { key: string | null; events: number; visitors: number; suspicious: number }[]): Promise<CountRow[]> {
     return rows.filter((r) => r.key !== null && r.key !== '').map((r) => ({ key: String(r.key), events: r.events, visitors: r.visitors, suspicious: r.suspicious }));
+  }
+
+  /** Events per client package and version in the window, newest activity included. */
+  async clients(projectId: string, days: number): Promise<ClientsResponse> {
+    const to = new Date();
+    const from = new Date(to.getTime() - days * DAY_MS);
+    const rows = await this.prisma.$queryRaw<
+      { name: string | null; version: string | null; engineName: string | null; engineVersion: string | null; events: number; visitors: number; suspicious: number; firstSeen: Date; lastSeen: Date }[]
+    >`
+      SELECT COALESCE(e."signals"->'via'->>'name', e."signals"->'sdk'->>'name') AS name,
+             COALESCE(e."signals"->'via'->>'version', e."signals"->'sdk'->>'version') AS version,
+             e."signals"->'sdk'->>'name' AS "engineName",
+             e."signals"->'sdk'->>'version' AS "engineVersion",
+             count(*)::int AS events,
+             count(DISTINCT e."visitorId")::int AS visitors,
+             (count(*) FILTER (WHERE e."suspectScore" >= ${SUSPICIOUS}))::int AS suspicious,
+             min(e."createdAt") AS "firstSeen",
+             max(e."createdAt") AS "lastSeen"
+      FROM "events" e
+      WHERE e."projectId" = ${projectId}::uuid AND e."createdAt" >= ${from} AND e."createdAt" < ${to}
+      GROUP BY 1, 2, 3, 4
+      ORDER BY events DESC
+      LIMIT 50`;
+    return {
+      clients: rows
+        .filter((r) => r.name)
+        .map((r) => ({
+          name: r.name as string,
+          version: r.version ?? '',
+          engine: { name: r.engineName ?? (r.name as string), version: r.engineVersion ?? r.version ?? '' },
+          events: r.events,
+          visitors: r.visitors,
+          suspicious: r.suspicious,
+          firstSeen: r.firstSeen.toISOString(),
+          lastSeen: r.lastSeen.toISOString(),
+        })),
+    };
   }
 
   async overview(projectId: string, days: number): Promise<AnalyticsResponse> {
@@ -147,7 +185,7 @@ export class AnalyticsService {
         WHERE e."projectId" = ${projectId}::uuid AND e."createdAt" >= ${from} AND e."createdAt" < ${to}
         GROUP BY 1, 2`,
       this.prisma.$queryRaw<{ key: string | null; events: number }[]>`
-        SELECT (e."signals"->'sdk'->>'name') || ' ' || (e."signals"->'sdk'->>'version') AS key, count(*)::int AS events
+        SELECT COALESCE(e."signals"->'via'->>'name', e."signals"->'sdk'->>'name') || ' ' || COALESCE(e."signals"->'via'->>'version', e."signals"->'sdk'->>'version') AS key, count(*)::int AS events
         FROM "events" e
         WHERE e."projectId" = ${projectId}::uuid AND e."createdAt" >= ${from} AND e."createdAt" < ${to}
         GROUP BY 1 ORDER BY events DESC LIMIT 8`,

@@ -1,7 +1,7 @@
 'use client';
 
 import type { EventLabelsResponse, EventResponse } from '@trace-id/signals/api';
-import { Activity, ArrowLeft, Bot, Check, ChevronLeft, ChevronRight, Flag, Network, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowLeft, Ban, Bot, Check, ChevronLeft, ChevronRight, Flag, Network, ShieldAlert, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/overla
 import { api, errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { scoreTone, formatDateTime, pct, timeAgo } from '@/lib/format';
+import { clientName } from '@/lib/clients';
+import { QuickList } from '@/components/lists/quick-list';
 import { useProject } from '@/lib/project-context';
 import { SIGNALS, signalMeta } from '@/lib/signals';
 import { useApi } from '@/lib/use-api';
@@ -104,7 +106,7 @@ function LabelPanel({ event }: { event: EventResponse }) {
 }
 
 export default function EventPage() {
-  const { project } = useProject();
+  const { project, canEdit } = useProject();
   const { eventId } = useParams<{ eventId: string }>();
   const router = useRouter();
   const base = `/projects/${project.id}`;
@@ -148,6 +150,25 @@ export default function EventPage() {
           { label: 'Match confidence', value: pct(e.confidence) },
         ]}
       />
+
+      {e.list && (
+        <div className={cn('flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-[13px]', e.list.action === 'block' ? 'border-bad/30 bg-bad-soft text-bad' : 'border-ok/30 bg-ok-soft text-ok')} role="status">
+          {e.list.action === 'block' ? <Ban className="size-4 shrink-0" /> : <ShieldCheck className="size-4 shrink-0" />}
+          <span className="min-w-0 flex-1">
+            <b>{e.list.action === 'block' ? 'Blocked' : 'Allowed'} by your list.</b> It matched the {e.list.kind === 'cidr' ? 'range' : e.list.kind} <span className="font-mono text-xs">{e.list.value}</span>{e.list.note && <> ({e.list.note})</>}, so the score is {e.suspectScore}. The signals alone gave {e.list.scoreBefore}.
+          </span>
+          <Link href={`${base}/lists`} className="underline">Open the lists</Link>
+        </div>
+      )}
+      {canEdit && (
+        <Card className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+          <span className="text-[13px] font-medium text-ink-2">Always treat as</span>
+          {e.ip.address && !/.0$/.test(e.ip.address) && <QuickList kind="ip" value={e.ip.address} label="this IP" />}
+          <QuickList kind="visitor" value={e.visitorId} label="this visitor" />
+          {e.deviceId !== e.visitorId && <QuickList kind="device" value={e.deviceId} label="this device" />}
+          {e.linkedId && <QuickList kind="linked" value={e.linkedId} label="this account" />}
+        </Card>
+      )}
 
       <div className="grid items-start gap-5 xl:grid-cols-[1fr_380px]">
         <div className="min-w-0">
@@ -240,6 +261,17 @@ export default function EventPage() {
                     <KV label="OS version">{e.app.osVersion ?? '-'}</KV>
                     <KV label="Real device">{e.app.isDevice === null ? 'Unknown' : e.app.isDevice ? 'Yes' : 'Emulator'}</KV>
                     <KV label="Rooted or jailbroken">{e.app.rooted === null ? 'Unknown' : e.app.rooted ? 'Likely' : 'No'}</KV>
+                  </dl>
+                </Card>
+              )}
+              {e.client && (
+                <Card className="mt-4 px-5 py-2">
+                  <CardHeader title="Captured by" description="The client package that sent this event." className="px-0" />
+                  <dl>
+                    <KV label="Client">{clientName((e.client.via ?? e.client.sdk).name)}</KV>
+                    <KV label="Package" mono>{(e.client.via ?? e.client.sdk).name}</KV>
+                    <KV label="Version" mono>{(e.client.via ?? e.client.sdk).version}</KV>
+                    {e.client.via && <KV label="Collection engine" mono>{e.client.sdk.name} {e.client.sdk.version}</KV>}
                   </dl>
                 </Card>
               )}

@@ -3,6 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 import { type Env } from '../config/env.js';
 import { type PrismaService } from '../infra/prisma.service.js';
+import { acceptInvites, hasPendingInvite } from './invites.js';
 
 export const AUTH = Symbol('AUTH');
 
@@ -21,10 +22,11 @@ export const SPOOFABLE_IP_HEADERS = [
   CLIENT_IP_HEADER,
 ];
 
-/** The first account may always be created; later ones only when sign-up is enabled. */
-export async function signupAllowed(prisma: PrismaService, env: Env): Promise<boolean> {
+/** The first account may always be created; later ones when sign-up is enabled or the address was invited to a project. */
+export async function signupAllowed(prisma: PrismaService, env: Env, email?: string): Promise<boolean> {
   if (env.DASHBOARD_ALLOW_SIGNUP) return true;
-  return (await prisma.user.count()) === 0;
+  if ((await prisma.user.count()) === 0) return true;
+  return email !== undefined && (await hasPendingInvite(prisma, email));
 }
 
 export function createAuth(env: Env, prisma: PrismaService) {
@@ -63,10 +65,14 @@ export function createAuth(env: Env, prisma: PrismaService) {
       user: {
         create: {
           before: async (user) => {
-            if (!(await signupAllowed(prisma, env))) {
+            if (!(await signupAllowed(prisma, env, user.email))) {
               throw new APIError('FORBIDDEN', { message: 'Sign-up is disabled' });
             }
             return { data: user };
+          },
+          // Whoever was invited gets their projects the moment the account exists.
+          after: async (user) => {
+            await acceptInvites(prisma, user.id, user.email);
           },
         },
       },

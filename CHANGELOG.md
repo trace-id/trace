@@ -2,6 +2,30 @@
 
 All notable changes to Trace. Versions follow [semantic versioning](https://semver.org); while the major version is 0, minor versions may change behaviour.
 
+## Unreleased
+
+### Added
+
+- **IP providers from the dashboard** (Integrations, IP intelligence; first account only). Add several providers and several keys per provider, spread calls over keys by weight or use them in failover order, set daily limits per key and provider, send only a share of addresses to a provider, set a priority, test a key before saving it, and watch calls, failures, rate limits and timings per provider and per key. Keys are stored encrypted and never shown again. Providers in `IP_PROVIDERS` keep working and are counted. New providers need one registry entry in `@trace-id/ip-intel`.
+- **A shared IP cache.** Each provider's answer is cached per address, so an address costs one provider call per cache time, including "nothing known" answers. With Redis the cache is shared between server instances and survives restarts, keyed by a hash so Redis never holds an address. The dashboard shows cache hits against provider calls.
+- **Redis from the dashboard** (Integrations, Redis): set or change the address with a connection test, no restart. `REDIS_URL` stays the fallback.
+- **Instance settings** in the dashboard for the lookup time budget, the cache time and the shared cache switch.
+- **Client package tracking.** Events now record which package sent them. The framework packages (React, Next.js, Vue, Nuxt, Svelte, Angular, Solid) report themselves as `via`, the engine stays `sdk`. The dashboard has a Clients tab (events, visitors, flagged and last seen per package and version) and shows the package on each event. Older SDKs keep working and appear as JavaScript.
+
+- **Team management.** Invite people to a project by email, change roles, remove people, leave a project. An invited address can sign up even when sign-up is closed. A project always keeps an owner.
+- **Delete a project** (owners, by typing its name), with everything under it.
+- **Allow and block lists** per project: an IP, a range, a visitor, a device or a linked id. Matching events score 100 or 0, the signal score is kept, allow wins. Block and Allow buttons on event and visitor pages.
+- **Alerts**: rules on flagged events, the flagged share or event volume, with a cooldown, a history in the dashboard and an optional signed webhook.
+
+### Changed
+
+- A provider that answers "nothing known" for an address is now cached like any other answer; only failed or timed-out calls are retried.
+- The Redis connection can be changed at runtime; the shared IP cache is only used while it is connected.
+
+### Database
+
+- New migrations add `instance_settings`, `ip_providers`, `ip_provider_keys`, `ip_provider_usage`, `project_invites`, `list_entries`, `alert_rules` and `alert_events`. They run on start like the others.
+
 ## 0.1.0 (2026-11-19)
 
 First public release. **Pre-release software: it has not been validated on real traffic, so do not use it to block users yet.** Start in shadow mode: log the score, review who would have been flagged, then choose thresholds from your own data.

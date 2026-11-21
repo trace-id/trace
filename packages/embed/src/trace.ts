@@ -348,6 +348,7 @@ export function createTrace(options: TraceOptions): Trace {
       components,
       attributes: { screenWidth: a.screenWidth, screenHeight: a.screenHeight, timezone: a.timezone, languages: a.languages, platform: a.platform, userAgent: a.userAgent, webglRenderer: a.webglRenderer },
       sdk: req.sdk,
+      ...(req.via ? { via: req.via } : {}),
       collectMs: req.signals.collectMs,
       linkedVisitors,
       deviceId,

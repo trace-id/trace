@@ -1,5 +1,6 @@
 import { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
 import { IdentifyError } from '@trace-id/sdk-js/errors';
+import { VIA } from './via.js';
 import { type App, type InjectionKey, inject, onMounted, type Ref, ref, shallowRef } from 'vue';
 
 export { Client, type ClientOptions, type GetOptions, type IdentifyResult } from '@trace-id/sdk-js';
@@ -11,7 +12,7 @@ const CLIENT: InjectionKey<Client> = Symbol('trace-client');
 export function createIdentify(options: ClientOptions) {
   return {
     install(app: App) {
-      app.provide(CLIENT, new Client(options));
+      app.provide(CLIENT, new Client({ ...options, via: options.via ?? VIA }));
     },
   };
 }

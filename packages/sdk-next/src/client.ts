@@ -9,11 +9,19 @@
  *
  * Collection runs in the browser only; nothing runs during server rendering.
  */
+import { IdentifyProvider as ReactIdentifyProvider, type IdentifyProviderProps } from '@trace-id/sdk-react';
+import { createElement } from 'react';
+import { VIA } from './via.js';
+
 export {
-  IdentifyProvider,
   useIdentifyClient,
   useVisitorData,
   type IdentifyProviderProps,
   type UseVisitorDataOptions,
   type VisitorDataState,
 } from '@trace-id/sdk-react';
+
+/** The React provider, reporting events as coming from @trace-id/sdk-next. */
+export function IdentifyProvider(props: IdentifyProviderProps) {
+  return createElement(ReactIdentifyProvider, { ...props, via: props.via ?? VIA });
+}

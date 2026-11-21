@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { VIA } from './via.js';
+
 const ClientContext = createContext<Client | null>(null);
 
 export interface IdentifyProviderProps extends ClientOptions {
@@ -22,7 +24,7 @@ export interface IdentifyProviderProps extends ClientOptions {
  * example with a `key`) to change the key or endpoint. Collection never runs during SSR.
  */
 export function IdentifyProvider({ children, ...options }: IdentifyProviderProps) {
-  const [client] = useState(() => new Client(options));
+  const [client] = useState(() => new Client({ ...options, via: options.via ?? VIA }));
   return <ClientContext.Provider value={client}>{children}</ClientContext.Provider>;
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import type { AnalyticsResponse, ProjectResponse } from '@trace-id/signals/api';
-import { Check, Database, KeyRound, LogOut, Monitor, Moon, Palette, Settings2, Sun, UserRound, Webhook } from 'lucide-react';
+import { Check, Database, KeyRound, LogOut, Monitor, Moon, Palette, Settings2, Sun, TriangleAlert, UserRound, Webhook } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { KV } from '@/components/domain';
@@ -20,7 +20,34 @@ const SECTIONS = [
   { id: 'appearance', label: 'Preferences', icon: Palette },
   { id: 'account', label: 'Your account', icon: UserRound },
   { id: 'developer', label: 'Developer', icon: KeyRound },
+  { id: 'danger', label: 'Delete project', icon: TriangleAlert },
 ] as const;
+
+/** Owners only: removes the project and everything in it, after typing its name. */
+function DeleteProject({ id, name }: { id: string; name: string }) {
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function remove() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/v1/projects/${id}`, { method: 'DELETE', body: { name: typed } });
+      window.location.assign('/');
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="grid gap-3">
+      <p className="text-[13px] leading-relaxed text-ink-2">This permanently deletes the project with its API keys, events, visitors, webhooks, lists, alerts and team. It cannot be undone, and applications using its keys stop working.</p>
+      <Field label={`Type ${name} to confirm`}><Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} /></Field>
+      <ErrorBanner message={error} />
+      <div><Button variant="danger" disabled={busy || typed.trim() !== name} onClick={() => void remove()}>{busy ? 'Deleting…' : 'Delete this project'}</Button></div>
+    </div>
+  );
+}
 
 const RETENTION = [
   { days: 7, label: '7 days' },
@@ -132,7 +159,7 @@ export default function SettingsPage() {
       <div className="grid items-start gap-6 lg:grid-cols-[220px_1fr]">
         <nav aria-label="Settings sections" className="sticky top-20 hidden lg:block">
           <ul className="grid gap-0.5">
-            {SECTIONS.map((s) => (
+            {SECTIONS.filter((s) => s.id !== 'danger' || project.role === 'owner').map((s) => (
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
@@ -257,6 +284,11 @@ export default function SettingsPage() {
               <Button asChild variant="outline"><Link href={`/projects/${project.id}/setup`}>Setup guide</Link></Button>
             </div>
           </Section>
+          {project.role === 'owner' && (
+            <Section id="danger" title="Delete project" description="Only owners can do this.">
+              <DeleteProject id={project.id} name={project.name} />
+            </Section>
+          )}
         </div>
       </div>
     </>

@@ -62,9 +62,17 @@ npm run ip-data -w trace-server -- /data/ip            # or --city for location,
 
 Run it from cron (for example daily at 04:00). Files are replaced atomically, a source that fails keeps its previous file, and the server reloads changed files within 10 minutes without a restart. Your own lists (`IP_BLOCKLIST_FILE`, `PROXY_CIDR_FILE`, `VPN_ASN_FILE`, `DATACENTER_ASN_FILE`) work the same way.
 
-**IP data providers.** For commercial VPN and residential proxy detection, which free lists cannot match, add a provider: `IP_PROVIDERS=ipqualityscore` with `IPQS_KEY=...`, or any of the thirteen in [Configuration: IP data providers](configuration.md#ip-data-providers). Lookups run within a 400 ms budget and are cached for a day per IP; a provider outage never fails an identification. Each provider receives visitor IP addresses, so it needs a data processing agreement and a line in your privacy policy.
+**IP data providers.** For commercial VPN and residential proxy detection, which free lists cannot match, add a provider in the dashboard (Integrations, IP intelligence: several providers, several keys each, daily limits, usage and a test button) or with environment variables: `IP_PROVIDERS=ipqualityscore` with `IPQS_KEY=...`, or any of the thirteen in [Configuration: IP data providers](configuration.md#ip-data-providers). Lookups run within a 400 ms budget and are cached for a day per IP; a provider outage never fails an identification. Each provider receives visitor IP addresses, so it needs a data processing agreement and a line in your privacy policy.
 
 See the [signal catalog](signals.md#ip-intelligence) for what each signal uses.
+
+## Team, lists and alerts
+
+All of this is in the dashboard and needs nothing but the database.
+
+- **Team.** Under Team, owners and admins invite people by email. An address that already has an account is added at once. A new address can sign up even when `DASHBOARD_ALLOW_SIGNUP` is off, for 14 days, and gets the project when its account exists. Trace sends no email, so you send the sign-in link yourself; email addresses are not verified, so send it only to the person invited and revoke the invitation if it goes astray. Roles: viewer (read), admin (keys, webhooks, lists, alerts, invitations), owner (roles, admins, deleting the project). A project keeps at least one owner. Owners can delete a project in Settings by typing its name; that removes its keys, events, visitors, webhooks, lists, alerts and team.
+- **Allow and block lists.** Per project, for an IP, a range, a visitor id, a device id or a linked id. A block entry makes matching events score 100 and an allow entry 0; allow wins if both match. The event keeps the signal score and says which entry decided. The embedded mode has no lists.
+- **Alerts.** Per project rules on flagged events, the flagged share, or event volume within a window of 5 minutes to a day, checked every minute, quiet for a cooldown after firing. Every firing is kept in the dashboard for 90 days. A rule can also post a signed `alert.fired` webhook (same signature as other webhooks, with its own secret; three attempts), subject to the same address checks as webhooks. There is no email sender.
 
 ## Backups
 

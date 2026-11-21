@@ -6,6 +6,7 @@ import {
   type EventResponse,
   type FraudModelsResponse,
   type AnalyticsResponse,
+  type ClientsResponse,
   type GraphResponse,
   type PolicySimulation,
   type QualityResponse,
@@ -166,6 +167,15 @@ export class ProjectDataController {
     const parsed = analyticsSchema.safeParse(query);
     if (!parsed.success) throw invalidFields(parsed.error);
     return this.analytics.overview(projectId, parsed.data.days);
+  }
+
+  @Get('clients')
+  @Auth('session')
+  async clients(@Req() req: FastifyRequest, @Query() query: unknown): Promise<ClientsResponse> {
+    const projectId = await this.scope(req);
+    const parsed = analyticsSchema.safeParse(query);
+    if (!parsed.success) throw invalidFields(parsed.error);
+    return this.analytics.clients(projectId, parsed.data.days);
   }
 
   @Get('rings')

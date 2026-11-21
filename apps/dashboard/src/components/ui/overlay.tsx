@@ -66,18 +66,42 @@ export const Tabs = TabsPrimitive.Root;
 export const TabsContent = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) => (
   <TabsPrimitive.Content className={cn('mt-5 focus-visible:outline-none [animation:fade-in_.15s_ease-out]', className)} {...props} />
 );
+/**
+ * Tabs are a contained segmented control: a tinted track with the active tab lifted onto a white card. They scroll
+ * sideways on a narrow screen instead of wrapping. Put an icon and a TabCount inside a trigger for the usual look.
+ */
 export const TabsList = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) => (
-  <TabsPrimitive.List className={cn('flex gap-1 overflow-x-auto border-b border-line', className)} {...props} />
+  <TabsPrimitive.List
+    className={cn('scrollbar-none inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[14px] border border-line bg-surface-2 p-1', className)}
+    {...props}
+  />
 );
 export const TabsTrigger = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) => (
   <TabsPrimitive.Trigger
     className={cn(
-      '-mb-px cursor-pointer whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-[13px] font-medium text-ink-3 transition-colors hover:text-ink data-[state=active]:border-signal data-[state=active]:text-ink',
+      'group inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] px-3.5 py-1.5 text-[13px] font-medium text-ink-3 transition-[background-color,color,box-shadow] duration-150',
+      'hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal',
+      'data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-[0_1px_2px_rgb(0_0_0/0.08),0_0_0_1px_var(--line)]',
+      '[&>svg]:size-3.5 [&>svg]:shrink-0 [&>svg]:opacity-70 data-[state=active]:[&>svg]:text-signal data-[state=active]:[&>svg]:opacity-100',
       className,
     )}
     {...props}
   />
 );
+
+/** A small count chip for the end of a tab label. */
+export function TabCount({ children, tone }: { children: ReactNode; tone?: 'bad' | 'warn' }) {
+  return (
+    <span
+      className={cn(
+        'tnum rounded-full px-1.5 py-px text-[11px] font-semibold leading-4 transition-colors',
+        tone === 'bad' ? 'bg-bad-soft text-bad' : tone === 'warn' ? 'bg-warn-soft text-warn' : 'bg-surface-3 text-ink-2 group-data-[state=active]:bg-signal-soft group-data-[state=active]:text-signal-ink',
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 /* ---------- Tooltip ---------- */
 

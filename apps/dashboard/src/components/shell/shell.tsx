@@ -20,6 +20,10 @@ import {
   Sun,
   Users,
   Webhook,
+  Plug,
+  Bell,
+  ListChecks,
+  UsersRound,
   Brain,
   Rocket,
   Network,
@@ -93,6 +97,7 @@ function groups(base: string): { title: string; items: NavItem[] }[] {
         { href: `${base}/visitors`, label: 'Visitors', icon: Fingerprint, prefix: true },
         { href: `${base}/accounts`, label: 'Accounts', icon: Users, prefix: true },
         { href: `${base}/investigate`, label: 'Investigate', icon: Network },
+        { href: `${base}/alerts`, label: 'Alerts', icon: Bell },
       ],
     },
     {
@@ -101,6 +106,7 @@ function groups(base: string): { title: string; items: NavItem[] }[] {
         { href: `${base}/signals`, label: 'Signals', icon: Radar },
         { href: `${base}/policy`, label: 'Policy simulator', icon: SlidersHorizontal },
         { href: `${base}/fraud`, label: 'Fraud models', icon: Brain },
+        { href: `${base}/lists`, label: 'Allow and block lists', icon: ListChecks },
         { href: `${base}/quality`, label: 'Data quality', icon: Gauge },
       ],
     },
@@ -110,9 +116,16 @@ function groups(base: string): { title: string; items: NavItem[] }[] {
         { href: `${base}/setup`, label: 'Get started', icon: Rocket },
         { href: `${base}/keys`, label: 'API keys', icon: KeyRound },
         { href: `${base}/webhooks`, label: 'Webhooks', icon: Webhook },
+        { href: `${base}/integrations`, label: 'Integrations', icon: Plug },
       ],
     },
-    { title: 'Project', items: [{ href: `${base}/settings`, label: 'Settings', icon: Settings }] },
+    {
+      title: 'Project',
+      items: [
+        { href: `${base}/team`, label: 'Team', icon: UsersRound },
+        { href: `${base}/settings`, label: 'Settings', icon: Settings },
+      ],
+    },
   ];
 }
 
@@ -288,7 +301,7 @@ function UserMenu() {
 
 const SECTION: Record<string, string> = {
   events: 'Events', visitors: 'Visitors', accounts: 'Accounts', investigate: 'Investigate', signals: 'Signals', policy: 'Policy simulator',
-  fraud: 'Fraud models', quality: 'Data quality', setup: 'Get started', keys: 'API keys', webhooks: 'Webhooks', settings: 'Settings',
+  fraud: 'Fraud models', quality: 'Data quality', setup: 'Get started', keys: 'API keys', webhooks: 'Webhooks', integrations: 'Integrations', alerts: 'Alerts', lists: 'Allow and block lists', team: 'Team', settings: 'Settings',
 };
 
 function Crumbs() {
@@ -383,6 +396,10 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     ['Get started', `${base}/setup`, Rocket],
     ['API keys', `${base}/keys`, KeyRound],
     ['Webhooks', `${base}/webhooks`, Webhook],
+    ['Integrations and IP providers', `${base}/integrations`, Plug],
+    ['Alerts', `${base}/alerts`, Bell],
+    ['Allow and block lists', `${base}/lists`, ListChecks],
+    ['Team and invitations', `${base}/team`, UsersRound],
     ['Settings', `${base}/settings`, Settings],
   ];
 

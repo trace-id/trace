@@ -10,6 +10,15 @@ import { ENV, type Env } from './config/env.js';
 import { SCORING } from './config/scoring.js';
 import { EventsController } from './events/events.controller.js';
 import { FraudController } from './fraud/fraud.controller.js';
+import { IpIntelController } from './intel/ip-intel.controller.js';
+import { IpProvidersService } from './intel/ip-providers.service.js';
+import { AlertsController } from './alerts/alerts.controller.js';
+import { AlertsService } from './alerts/alerts.service.js';
+import { ListsController } from './lists/lists.controller.js';
+import { ListsService } from './lists/lists.service.js';
+import { MembersController } from './manage/members.controller.js';
+import { InstanceController } from './settings/instance.controller.js';
+import { InstanceSettingsService } from './settings/instance-settings.service.js';
 import { FraudService } from './fraud/fraud.service.js';
 import { HealthController } from './health/health.controller.js';
 import { IdentifyController } from './identify/identify.controller.js';
@@ -58,6 +67,11 @@ export class AppModule {
         ProjectKeysController,
         ProjectDataController,
         FraudController,
+        IpIntelController,
+        MembersController,
+        ListsController,
+        AlertsController,
+        InstanceController,
         HealthController,
         SdkController,
         OpenApiController,
@@ -86,6 +100,10 @@ export class AppModule {
         WebhookService,
         WebhookWorkerService,
         FraudService,
+        InstanceSettingsService,
+        ListsService,
+        AlertsService,
+        IpProvidersService,
       ],
     };
   }

@@ -12,6 +12,7 @@ import { computeSuspectScore } from '@trace-id/signals/scoring';
 import { type RequestHeaders, type TlsInfo } from '@trace-id/signals/types';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { FraudService } from '../fraud/fraud.service.js';
+import { ListsService } from '../lists/lists.service.js';
 import { newVisitorId, uuidv7 } from '../common/ids.js';
 import { ENV, type Env } from '../config/env.js';
 import { SCORING } from '../config/scoring.js';
@@ -75,6 +76,7 @@ export class IdentifyService {
     private readonly crossBrowser: CrossBrowserService,
     private readonly accounts: AccountsService,
     private readonly fraud: FraudService,
+    private readonly lists: ListsService,
   ) {
     this.sealKey = env.SEALED_RESULTS_KEY ? Buffer.from(env.SEALED_RESULTS_KEY, 'base64') : null;
     this.verifyCrawler = crawlerVerifierFor(env.CRAWLER_RANGES_FILE, (m) => this.logger.log(m));
@@ -169,7 +171,10 @@ export class IdentifyService {
       signedAgent: ctx.signedAgent ?? null,
     };
     const results = evaluateSignals(evalCtx, this.scoring);
-    const score = computeSuspectScore(results, this.scoring);
+    const signalScore = computeSuspectScore(results, this.scoring);
+    // The project's allow and block lists decide the score when an event matches one; the signal score stays on the event.
+    const listed = await this.lists.match(projectId, { ip: ctx.ip, visitorId, deviceId, linkedId: req.linkedId ?? null });
+    const score = listed ? { ...signalScore, score: listed.action === 'block' ? 100 : 0 } : signalScore;
 
     const eventId = uuidv7(now);
     const a = req.signals.attributes;
@@ -195,6 +200,8 @@ export class IdentifyService {
         webglRenderer: a.webglRenderer,
       },
       sdk: req.sdk,
+      ...(req.via ? { via: req.via } : {}),
+      ...(listed ? { list: { action: listed.action, kind: listed.kind, value: listed.value, note: listed.note, entryId: listed.id, scoreBefore: signalScore.score } } : {}),
       collectMs: req.signals.collectMs,
       linkedVisitors,
       deviceId,

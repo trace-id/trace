@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Patch, Post, Req } from '@nestjs/common';
 import { type MeResponse, type ProjectResponse } from '@trace-id/signals/api';
 import { type FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ import { invalidFields } from '../webhooks/webhook-admin.service.js';
 const MAX_PROJECTS_PER_USER = 50;
 
 const createProjectSchema = z.object({ name: z.string().trim().min(1).max(200) }).strict();
+const deleteProjectSchema = z.object({ name: z.string() }).strict();
 const updateProjectSchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
@@ -110,5 +111,30 @@ export class ManageController {
     }
     const p = await this.prisma.project.update({ where: { id: projectId }, data: parsed.data });
     return { id: p.id, name: p.name, retentionDays: p.retentionDays, role, createdAt: p.createdAt.toISOString() };
+  }
+
+  /**
+   * Deletes the project and everything under it: keys, visitors, events, webhooks, lists and alerts. Owners only, and
+   * the body must repeat the project's name, so a stray request cannot do it.
+   */
+  @Delete('projects/:projectId')
+  @Auth('session')
+  @MinRole('owner')
+  @HttpCode(204)
+  async deleteProject(@Req() req: FastifyRequest, @Body() body: unknown): Promise<void> {
+    const { projectId, userId } = requireProject(req);
+    await this.limit(userId);
+    const parsed = deleteProjectSchema.safeParse(body);
+    if (!parsed.success) throw invalidFields(parsed.error);
+    const p = await this.prisma.project.findUniqueOrThrow({ where: { id: projectId }, select: { name: true } });
+    if (parsed.data.name.trim() !== p.name) throw ApiError.badRequest('Type the project name exactly to confirm', 'confirmation_mismatch');
+    // A big project cascades through millions of events; the usual statement timeout would cut that short.
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRawUnsafe(`SET LOCAL statement_timeout = '300s'`);
+        await tx.project.delete({ where: { id: projectId } });
+      },
+      { timeout: 310_000 },
+    );
   }
 }

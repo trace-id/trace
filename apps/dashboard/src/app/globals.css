@@ -205,3 +205,11 @@ body {
 main .grid > * {
   min-width: 0;
 }
+
+/* Scrollable rows (tab lists) without a visible scrollbar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -8,5 +8,7 @@ export default defineNuxtPlugin((nuxtApp: { vueApp: { use: (plugin: unknown) => 
     console.warn('[trace] Set trace.apiKey/endpoint in nuxt.config or NUXT_PUBLIC_TRACE_KEY and NUXT_PUBLIC_TRACE_ENDPOINT.');
     return;
   }
-  nuxtApp.vueApp.use(createIdentify({ apiKey: traceKey, endpoint: traceEndpoint }));
+  // Reported with every event; the version must equal package.json (a test in sdk-js checks).
+  const via = { name: '@trace-id/sdk-nuxt', version: '0.1.0' };
+  nuxtApp.vueApp.use(createIdentify({ apiKey: traceKey, endpoint: traceEndpoint, via }));
 });

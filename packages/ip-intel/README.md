@@ -29,6 +29,37 @@ Every adapter has a pure mapper (`mapIpqs`, `mapSpur`, ...) from the provider's 
 you can check what a response turns into. A flag is reported only when the provider's plan returns it: absent means
 "not checked", never "no".
 
+## Registry, key pool and cache
+
+`REGISTRY` describes every provider: its fields (which belong to a key, which to the provider, which are secret), what
+it can report, a note on its free plan, and a `build` function. The Trace dashboard draws its forms from it, and
+`providersFromEnv` is built on it. Adding a provider is an adapter in `providers.ts` plus one registry entry.
+
+```ts
+import { createIpIntel, descriptor, pooledSource } from '@trace-id/ip-intel';
+
+const ipinfo = pooledSource({
+  ref: 'ipinfo-1', // stable id for cache and usage
+  descriptor: descriptor('ipinfo')!,
+  settings: { plan: 'lite' },
+  keys: [
+    { id: 'a', label: 'main', values: { token: '...' }, weight: 3, dailyLimit: 1500, enabled: true },
+    { id: 'b', label: 'backup', values: { token: '...' }, weight: 1, dailyLimit: null, enabled: true },
+  ],
+  strategy: 'weighted', // or 'failover'
+  sharePercent: 100, // send only this share of addresses
+  dailyLimit: null,
+  onUsage: (e) => console.log(e.providerRef, e.keyId, e.outcome, e.latencyMs),
+});
+
+const intel = createIpIntel({ sources: [ipinfo], sharedCache /* optional: Redis or anything with get/set */ });
+```
+
+A pooled source picks a key per lookup, skips keys that are disabled, over their daily limit or cooling down (60 seconds
+after a 429 or 402, ten minutes after a 401 or 403), and tries the next key when a call fails. Its usage events never
+contain a key. The cache keeps each source's answer per address, including "nothing known"; failed calls are not
+cached, and private addresses are never sent. `stats()` reports memory hits, shared hits and provider calls.
+
 ## Your own source
 
 ```ts

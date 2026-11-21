@@ -2,6 +2,7 @@ import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { type PrismaClient } from '@prisma/client';
 import {
   type ApiKeyResponse,
+  type ClientsResponse,
   type EventResponse,
   type EventSearchResponse,
   type IdentifyResponse,
@@ -165,6 +166,7 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
         payload: JSON.stringify({
           signals: makePayload({ components: { canvas: 'ab'.repeat(14), audio: 'cd'.repeat(14) }, bot: { webdriver: bot } }),
           sdk: { name: 't', version: '0' },
+          ...(bot ? { via: { name: '@trace-id/sdk-react', version: '0.1.0' } } : {}),
           linkedId: 'user-42',
         }),
       });
@@ -200,6 +202,16 @@ describe.skipIf(!DATABASE_URL)('management API with dashboard sessions (Postgres
     const usage = (await call('alice', 'GET', `/v1/projects/${projectId}/usage?days=7`)).json<UsageResponse>();
     expect(usage.days).toHaveLength(7);
     expect(usage.days[6]).toMatchObject({ events: 2, suspicious: 0 });
+
+    // Which client package sent the events: the framework package when there was one, else the SDK itself.
+    const clients = (await call('bob', 'GET', `/v1/projects/${projectId}/clients?days=7`)).json<ClientsResponse>().clients;
+    expect(clients.map((c) => [c.name, c.version, c.engine.name, c.events])).toEqual(
+      expect.arrayContaining([
+        ['@trace-id/sdk-react', '0.1.0', 't', 1],
+        ['t', '0', 't', 1],
+      ]),
+    );
+    expect((await call('bob', 'GET', `/v1/projects/${projectId}/clients?days=0`)).statusCode).toBe(400);
 
     expect((await call('alice', 'POST', `/v1/projects/${projectId}/keys/${pub.id}/revoke`)).statusCode).toBe(201);
     expect((await identify()).statusCode).toBe(401);

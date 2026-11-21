@@ -13,6 +13,14 @@ describe('identify request schema', () => {
     expect(r.ok).toBe(true);
   });
 
+  it('accepts the framework package an event came from, and keeps it strict and short', () => {
+    const via = { name: '@trace-id/sdk-react', version: '0.1.0' };
+    expect(parseIdentifyRequest({ ...valid(), via }).ok).toBe(true);
+    expect(parseIdentifyRequest({ ...valid(), via: { ...via, extra: 1 } }).ok).toBe(false);
+    expect(parseIdentifyRequest({ ...valid(), via: { name: 'x'.repeat(65), version: '1' } }).ok).toBe(false);
+    expect(parseIdentifyRequest({ ...valid(), via: { name: 'x' } }).ok).toBe(false);
+  });
+
   it('rejects unknown fields at every level', () => {
     expect(parseIdentifyRequest({ ...valid(), visitorId: 'forged' }).ok).toBe(false);
     const nested = valid();

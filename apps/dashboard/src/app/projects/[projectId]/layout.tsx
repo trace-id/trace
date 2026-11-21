@@ -6,7 +6,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { CommandPalette, Sidebar, Topbar, usePaletteShortcut, Wordmark } from '@/components/shell/shell';
 import { Shortcuts } from '@/components/shell/shortcuts';
 import { ToastProvider } from '@/components/ui/toast';
-import { ErrorBanner, Skeleton } from '@/components/ui/primitives';
+import { ProjectUnavailable } from '@/components/project-unavailable';
+import { Skeleton } from '@/components/ui/primitives';
 import { ProjectContext } from '@/lib/project-context';
 import { useApi } from '@/lib/use-api';
 
@@ -48,18 +49,18 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 
   if (!ctx) {
     return (
-      <div className="grid min-h-screen place-items-center px-6">
+      <>
         {me.loading && !me.data ? (
-          <div className="grid w-full max-w-sm justify-items-center gap-6">
-            <Wordmark />
-            <Skeleton className="h-3 w-48" />
+          <div className="grid min-h-screen place-items-center px-6">
+            <div className="grid w-full max-w-sm justify-items-center gap-6">
+              <Wordmark />
+              <Skeleton className="h-3 w-48" />
+            </div>
           </div>
         ) : (
-          <div className="w-full max-w-md">
-            <ErrorBanner message={me.error ?? 'Project not found, or you are not a member.'} />
-          </div>
+          <ProjectUnavailable projectId={projectId} me={me.data} error={me.error} onRetry={me.reload} />
         )}
-      </div>
+      </>
     );
   }
 

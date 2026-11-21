@@ -5,6 +5,7 @@ import { type EventResponse, type LinkedVisitor, type MatchKind, type TagValue }
 import { type SignalId } from '@trace-id/signals/config';
 import { type SignalResult } from '@trace-id/signals/definitions';
 import { type ScoreReason } from '@trace-id/signals/scoring';
+import { type ListMatch } from '../lists/lists.service.js';
 import { type AccountHistory, type AppInfo, type Components, type DeviceAttributes } from '@trace-id/signals/types';
 
 /** Shape of events.signals (jsonb). Raw readings never get here; components are hashes. */
@@ -13,6 +14,10 @@ export interface StoredSignals {
   components: Components;
   attributes: EventResponse['attributes'] & Pick<DeviceAttributes, 'webglRenderer'>;
   sdk: { name: string; version: string };
+  /** The framework package that wrapped the SDK, when there was one. */
+  via?: { name: string; version: string };
+  /** The allow or block list entry this event matched, which set its score. */
+  list?: ListMatch;
   collectMs: number;
   /** Absent on events stored before cross-browser linking existed. */
   linkedVisitors?: LinkedVisitor[];
@@ -70,6 +75,8 @@ export function toEventResponse(row: EventRow, verifyWindowMinutes: number): Eve
     },
     ip: { address: row.ip, country: row.country, asn: row.asn, ...(stored.ipLocation ? { location: stored.ipLocation } : {}) },
     tags: (row.tags as Record<string, TagValue> | null) ?? null,
+    ...(stored.list ? { list: stored.list } : {}),
+    ...(stored.sdk ? { client: { sdk: stored.sdk, ...(stored.via ? { via: stored.via } : {}) } } : {}),
     linkedId: row.linkedId,
     linkedVisitors: stored.linkedVisitors ?? [],
     ...(stored.botInfo ? { botInfo: stored.botInfo } : {}),

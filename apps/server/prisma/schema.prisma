@@ -19,6 +19,10 @@ model Project {
   componentStats ComponentStat[]
   fraudModels    FraudModel[]
   nonces         RequestNonce[]
+  invites        ProjectInvite[]
+  listEntries    ListEntry[]
+  alertRules     AlertRule[]
+  alertEvents    AlertEvent[]
 
   @@map("projects")
 }
@@ -328,4 +332,168 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+// Instance-wide settings edited in the dashboard. Environment variables stay the fallback.
+
+model InstanceSetting {
+  key       String   @id @db.VarChar(100)
+  // Plain text, or "v1.…" when the value is a secret sealed with TOKEN_SECRET.
+  value     String
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  updatedBy String?  @db.VarChar(64)
+
+  @@map("instance_settings")
+}
+
+// IP data providers managed in the dashboard (see docs/configuration.md#ip-data-providers).
+
+model IpProvider {
+  id           String          @id @default(uuid()) @db.Uuid
+  // The registry id of the provider, e.g. "ipinfo".
+  provider     String          @db.VarChar(40)
+  label        String          @db.VarChar(100)
+  enabled      Boolean         @default(true)
+  // Lower runs first; for country, ASN and location the first provider that answers wins.
+  priority     Int             @default(100)
+  // Percent of addresses sent to this provider (0 to 100).
+  sharePercent Int             @default(100)
+  // Calls per UTC day over all keys; null means no limit.
+  dailyLimit   Int?
+  // "weighted" or "failover".
+  strategy     String          @default("weighted") @db.VarChar(12)
+  // Provider-scope field values (plan, thresholds). Never secrets.
+  settings     Json            @default("{}")
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
+  keys         IpProviderKey[]
+
+  @@index([priority])
+  @@map("ip_providers")
+}
+
+model IpProviderKey {
+  id         String     @id @default(uuid()) @db.Uuid
+  providerId String     @db.Uuid
+  label      String     @db.VarChar(100)
+  // The key's field values as JSON, sealed with TOKEN_SECRET (AES-256-GCM). Never returned by the API.
+  sealed     String
+  // Masked preview of the main secret, e.g. "••••a1b2". Safe to show.
+  hint       String     @db.VarChar(40)
+  enabled    Boolean    @default(true)
+  weight     Int        @default(1)
+  dailyLimit Int?
+  createdAt  DateTime   @default(now()) @db.Timestamptz(3)
+  provider   IpProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@map("ip_provider_keys")
+}
+
+// Calls per UTC day. References are plain strings (a provider id, a key id, or "env:<name>"), so history outlives
+// a deleted provider and environment-configured providers are counted too.
+model IpProviderUsage {
+  day         DateTime @db.Date
+  providerRef String   @db.VarChar(64)
+  keyRef      String   @default("") @db.VarChar(64)
+  provider    String   @db.VarChar(40)
+  requests    Int      @default(0)
+  ok          Int      @default(0)
+  errors      Int      @default(0)
+  rateLimited Int      @default(0)
+  authFailed  Int      @default(0)
+  skipped     Int      @default(0)
+  latencyMs   BigInt   @default(0)
+
+  @@id([day, providerRef, keyRef])
+  @@index([day])
+  @@map("ip_provider_usage")
+}
+
+// People invited to a project by email. Accepted when that address has (or creates) a dashboard account.
+
+model ProjectInvite {
+  id        String      @id @default(uuid()) @db.Uuid
+  projectId String      @db.Uuid
+  // Lower case.
+  email     String      @db.VarChar(254)
+  role      ProjectRole
+  invitedBy String?     @db.VarChar(64)
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime    @db.Timestamptz(3)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, email])
+  @@index([email])
+  @@map("project_invites")
+}
+
+// Always-allow and always-block entries: an IP, a CIDR range, a visitor id or a linked id (your user id).
+
+model ListEntry {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @db.Uuid
+  // "ip", "cidr", "visitor" or "linked".
+  kind      String    @db.VarChar(10)
+  value     String    @db.VarChar(256)
+  // "allow" or "block".
+  action    String    @db.VarChar(5)
+  note      String?   @db.VarChar(200)
+  createdBy String?   @db.VarChar(64)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime? @db.Timestamptz(3)
+  hits      Int       @default(0)
+  lastHitAt DateTime? @db.Timestamptz(3)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, kind, value])
+  @@index([projectId, action])
+  @@map("list_entries")
+}
+
+// Alert rules and what they fired.
+
+model AlertRule {
+  id              String       @id @default(uuid()) @db.Uuid
+  projectId       String       @db.Uuid
+  name            String       @db.VarChar(100)
+  // "flagged_events", "flagged_ratio" or "event_volume".
+  kind            String       @db.VarChar(24)
+  threshold       Int
+  windowMinutes   Int
+  // For ratios: the fewest events in the window before the ratio counts.
+  minEvents       Int          @default(0)
+  cooldownMinutes Int          @default(60)
+  enabled         Boolean      @default(true)
+  webhookUrl      String?      @db.VarChar(2048)
+  // Signing secret for the webhook, sealed with TOKEN_SECRET.
+  webhookSecret   String?
+  lastFiredAt     DateTime?    @db.Timestamptz(3)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  events          AlertEvent[]
+
+  @@index([projectId])
+  @@map("alert_rules")
+}
+
+model AlertEvent {
+  id            String     @id @default(uuid()) @db.Uuid
+  projectId     String     @db.Uuid
+  ruleId        String?    @db.Uuid
+  ruleName      String     @db.VarChar(100)
+  kind          String     @db.VarChar(24)
+  observed      Int
+  threshold     Int
+  windowMinutes Int
+  details       Json       @default("{}")
+  // "none" (no webhook), "delivered" or "failed".
+  delivery      String     @default("none") @db.VarChar(10)
+  deliveryError String?    @db.VarChar(200)
+  firedAt       DateTime   @default(now()) @db.Timestamptz(3)
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rule          AlertRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, firedAt])
+  @@map("alert_events")
 }

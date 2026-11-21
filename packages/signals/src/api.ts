@@ -14,6 +14,11 @@ export interface IdentifyRequest {
   tags?: Record<string, TagValue>;
   linkedId?: string;
   sdk: { name: string; version: string };
+  /**
+   * The framework package the page used, when it was not sdk-js directly (@trace-id/sdk-react, sdk-vue and so on).
+   * `sdk` stays the engine that collected the signals. Absent from older SDKs.
+   */
+  via?: { name: string; version: string };
   /** Device clock (ms since epoch) when the request was sent; the server derives the clock offset, shared by every browser on the device. */
   sentAt?: number;
   /** Random per call (32 hex characters); lets the server spot a request sent twice. */
@@ -76,6 +81,10 @@ export interface EventResponse {
     location?: IpLocation;
   };
   tags: Record<string, TagValue> | null;
+  /** Set when the event matched one of the project's allow or block lists: that entry decided the score. */
+  list?: { action: 'allow' | 'block'; kind: 'ip' | 'cidr' | 'visitor' | 'device' | 'linked'; value: string; note: string | null; entryId: string; scoreBefore: number };
+  /** Which client sent the event: the SDK that collected it and, for framework packages, the package that wrapped it. */
+  client?: { sdk: { name: string; version: string }; via?: { name: string; version: string } };
   linkedId: string | null;
   /** Empty when cross-browser linking is off or nothing matched. */
   linkedVisitors: LinkedVisitor[];
@@ -393,6 +402,22 @@ export interface PolicySimulation {
   series: { t: string; matched: number }[];
   scoreBands: number[];
   topAccounts: { linkedId: string; hits: number }[];
+}
+
+/** Which client packages sent events in a window: the package a developer installed, not only the engine under it. */
+export interface ClientsResponse {
+  clients: {
+    /** The package the page used: a framework package when there was one, otherwise the SDK itself. */
+    name: string;
+    version: string;
+    /** The engine that collected the signals. Equals name and version when no framework package wrapped it. */
+    engine: { name: string; version: string };
+    events: number;
+    visitors: number;
+    suspicious: number;
+    firstSeen: string;
+    lastSeen: string;
+  }[];
 }
 
 export interface QualityResponse {
