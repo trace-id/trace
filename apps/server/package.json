@@ -20,9 +20,9 @@
     "ip-data": "tsx src/scripts/fetch-ip-data.ts"
   },
   "dependencies": {
-    "@nestjs/common": "11.2.8",
-    "@nestjs/core": "11.2.8",
-    "@nestjs/platform-fastify": "11.2.8",
+    "@nestjs/common": "11.2.11",
+    "@nestjs/core": "11.2.11",
+    "@nestjs/platform-fastify": "11.2.11",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@trace-id/embed": "0.1.1",
@@ -30,10 +30,10 @@
     "@trace-id/sdk-js": "0.1.1",
     "@trace-id/sdk-node": "0.1.1",
     "@trace-id/signals": "0.1.1",
-    "better-auth": "1.7.14",
-    "fastify": "5.12.7",
+    "better-auth": "1.7.25",
+    "fastify": "5.12.8",
     "ioredis": "5.11.1",
-    "mmdb-lib": "3.0.3",
+    "mmdb-lib": "3.0.5",
     "pg": "8.23.1",
     "prisma": "7.10.1",
     "reflect-metadata": "0.2.2",
@@ -41,8 +41,8 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@nestjs/testing": "11.2.8",
-    "@swc/core": "1.13.21",
+    "@nestjs/testing": "11.2.11",
+    "@swc/core": "1.16.22",
     "@trace-id/sdk-react-native": "0.1.1",
     "@types/pg": "8.23.1",
     "tsx": "4.23.15",
