@@ -22,9 +22,9 @@
     "@types/node": "22.20.5",
     "eslint": "9.39.5",
     "happy-dom": "21.0.4",
-    "turbo": "2.11.10",
+    "turbo": "2.11.13",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.40.0",
+    "typescript-eslint": "8.73.0",
     "vitest": "4.1.12"
   },
   "overrides": {
